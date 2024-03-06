@@ -8,7 +8,7 @@ public class JoinMessage extends Message{
     private String nodeState= "Joining";
 
     public JoinMessage(InetAddress source, int sequenceNumber, InetAddress nodeAddress, int nodePort, int sourceId, InetAddress destination) {
-        super(source, sequenceNumber, sourceId, destination );
+        super(source, sourceId, destination );
         this.nodeAddress = nodeAddress;
         this.nodePort = nodePort;
     }
@@ -31,7 +31,4 @@ public class JoinMessage extends Message{
     @Override
     public InetAddress getSource() { return source; }
 
-    public int getSequenceNumber() {
-        return sequenceNumber;
-    }
 }

@@ -21,7 +21,7 @@ public class ListeningTask implements Runnable {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 Message message = Message.parseToMessage(new String(packet.getData(), 0, packet.getLength()));
-                node.processMessage(message);
+                node.getReliableBroadcastLibrary().processMessage(message, node.getView());
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -2,11 +2,12 @@ import java.net.InetAddress;
 
 public class StringMessage extends Message {
     private final String message;
+    private final int sequenceNumber;
 
-
-    public StringMessage(InetAddress source, String message, int sequenceNumber, int sourceId, InetAddress destination) {
-        super(source, sequenceNumber, sourceId, destination);
+    public StringMessage(InetAddress source, String message, int sourceId, InetAddress destination, int sequenceNumber) {
+        super(source, sourceId, destination);
         this.message = message;
+        this.sequenceNumber = sequenceNumber;
     }
 
     @Override

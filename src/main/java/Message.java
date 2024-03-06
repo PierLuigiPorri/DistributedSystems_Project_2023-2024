@@ -3,13 +3,11 @@ import java.net.InetAddress;
 public abstract class Message {
     protected int sourceId;
     protected InetAddress destination;
-    protected int sequenceNumber;
     protected InetAddress source;
     protected final long timeCreated = System.currentTimeMillis();
 
-    public Message(InetAddress source, int sequenceNumber, int sourceId, InetAddress destination) {
+    public Message(InetAddress source, int sourceId, InetAddress destination) {
         this.source = source;
-        this.sequenceNumber = sequenceNumber;
         this.sourceId = sourceId;
         this.destination = destination;
     }

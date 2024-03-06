@@ -7,8 +7,8 @@ public class ViewChangeMessage extends Message{
     private List<InetAddress> view;
     private List<Integer> viewIds;
 
-    public ViewChangeMessage(InetAddress source, int sequenceNumber, int sourceId, InetAddress destination, List<InetAddress> view, List<Integer> viewIds) {
-        super(source, sequenceNumber, sourceId, destination);
+    public ViewChangeMessage(InetAddress source, int sourceId, InetAddress destination, List<InetAddress> view, List<Integer> viewIds) {
+        super(source, sourceId, destination);
         this.view = view;
         this.viewIds = viewIds;
     }
@@ -31,10 +31,6 @@ public class ViewChangeMessage extends Message{
 
     @Override
     public InetAddress getSource() { return source; }
-
-    public int getSequenceNumber() {
-        return sequenceNumber;
-    }
 
 
 }
