@@ -1,14 +1,19 @@
+package Client.Tasks;
+
+import Client.Node;
+import Client.ReliableBroadcastLibrary;
+import Messages.Message;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
-public class ListeningTask implements Runnable {
+public class ReceiverTask implements Runnable {
+    private final ReliableBroadcastLibrary library;
+    private final int port;
 
-    private Node node;
-    private int port;
-
-    public ListeningTask(Node node, int port) {
-        this.node = node;
+    public ReceiverTask(ReliableBroadcastLibrary library, int port) {
+        this.library = library;
         this.port = port;
     }
 
@@ -20,8 +25,8 @@ public class ListeningTask implements Runnable {
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
-                Message message = Message.parseToMessage(new String(packet.getData(), 0, packet.getLength()));
-                node.getReliableBroadcastLibrary().processMessage(message, node.getView());
+                Message message = this.library.parseToMessage(new String(packet.getData(), 0, packet.getLength()));
+                this.library.getNode().queueMessage(message);
             }
         } catch (IOException e) {
             e.printStackTrace();

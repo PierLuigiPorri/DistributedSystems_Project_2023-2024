@@ -1,9 +1,13 @@
+package Messages;
+
+import Messages.Message;
+
 import java.net.InetAddress;
 
 public class PingMessage extends Message {
 
-    public PingMessage(InetAddress source, int sequenceNumber, int sourceId, InetAddress destination) {
-        super(source, sourceId, destination);
+    public PingMessage(int sourceId) {
+        super(sourceId);
     }
 
     @Override
@@ -18,7 +22,7 @@ public class PingMessage extends Message {
     }
 
     @Override
-    public InetAddress getSource() {
-        return source;
+    public int getSourceId() {
+        return sourceId;
     }
 }

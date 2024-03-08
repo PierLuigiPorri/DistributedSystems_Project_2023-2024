@@ -1,20 +1,25 @@
+package Messages;
+
+import Client.Peer;
+import Messages.Message;
+
 import java.net.InetAddress;
 import java.util.List;
 
-public class ViewChangeMessage extends Message{
+public class ViewChangeMessage extends Message {
     private final long timeCreated = System.currentTimeMillis();
 
-    private List<InetAddress> view;
+    private List<Peer> view;
     private List<Integer> viewIds;
 
-    public ViewChangeMessage(InetAddress source, int sourceId, InetAddress destination, List<InetAddress> view, List<Integer> viewIds) {
-        super(source, sourceId, destination);
+    public ViewChangeMessage(int sourceId,List<Peer> view, List<Integer> viewIds) {
+        super(sourceId);
         this.view = view;
         this.viewIds = viewIds;
     }
 
 
-    public List<InetAddress> getView() {
+    public List<Peer> getView() {
         return view;
     }
 
@@ -30,7 +35,5 @@ public class ViewChangeMessage extends Message{
     }
 
     @Override
-    public InetAddress getSource() { return source; }
-
-
+    public int getSourceId() { return sourceId; }
 }

@@ -1,18 +1,20 @@
+package Messages;
+
 import java.net.InetAddress;
 
-public class StringMessage extends Message {
+public class ContentMessage extends Message {
     private final String message;
     private final int sequenceNumber;
 
-    public StringMessage(InetAddress source, String message, int sourceId, InetAddress destination, int sequenceNumber) {
-        super(source, sourceId, destination);
+    public ContentMessage(String message, int sourceId, int sequenceNumber) {
+        super(sourceId);
         this.message = message;
         this.sequenceNumber = sequenceNumber;
     }
 
     @Override
     public MessageEnum getType() {
-        return MessageEnum.STRING;
+        return MessageEnum.CONTENT;
     }
 
     @Override
@@ -22,9 +24,7 @@ public class StringMessage extends Message {
     }
 
     @Override
-    public InetAddress getSource() {
-        return source;
-    }
+    public int getSourceId() { return sourceId; }
 
     public String getMessage() {
         return message;
