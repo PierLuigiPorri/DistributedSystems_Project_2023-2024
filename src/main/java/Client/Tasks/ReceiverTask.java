@@ -25,8 +25,13 @@ public class ReceiverTask implements Runnable {
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
-                Message message = this.library.parseToMessage(new String(packet.getData(), 0, packet.getLength()));
-                this.library.getNode().queueMessage(message);
+                String receivedData = new String(packet.getData(), 0, packet.getLength());
+                Message message = Message.deserialize(receivedData);
+                if (message != null) {
+                    this.library.getNode().queueMessage(message);
+                } else {
+                    System.err.println("Failed to deserialize received message.");
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

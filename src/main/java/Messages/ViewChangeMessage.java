@@ -29,11 +29,5 @@ public class ViewChangeMessage extends Message {
     }
 
     @Override
-    public String getTransmissionString() {
-        //TODO: implement method
-        return null;
-    }
-
-    @Override
     public int getSourceId() { return sourceId; }
 }

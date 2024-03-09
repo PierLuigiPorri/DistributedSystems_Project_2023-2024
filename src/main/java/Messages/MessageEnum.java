@@ -1,5 +1,5 @@
 package Messages;
 
 public enum MessageEnum {
-    JOIN, BEGIN, CONTENT, PING, LEAVE, NACK, ACK, VIEW, VIEW_CHANGE
+    JOIN,  PING, CONTENT, VIEW_CHANGE, LEAVE, ACK, DROP, COMMIT, FLUSH
 }

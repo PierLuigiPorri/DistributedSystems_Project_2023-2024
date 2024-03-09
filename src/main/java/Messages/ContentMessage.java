@@ -18,12 +18,6 @@ public class ContentMessage extends Message {
     }
 
     @Override
-    public String getTransmissionString() {
-        //TODO: Implement this method
-        return null;
-    }
-
-    @Override
     public int getSourceId() { return sourceId; }
 
     public String getMessage() {

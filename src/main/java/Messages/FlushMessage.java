@@ -1,18 +1,14 @@
 package Messages;
 
-import Client.Node;
+public class FlushMessage extends Message {
 
-import java.net.InetAddress;
-
-public class JoinMessage extends Message {
-
-    public JoinMessage(int sourceId) {
+    public FlushMessage(int sourceId) {
         super(sourceId);
     }
 
     @Override
     public MessageEnum getType() {
-        return MessageEnum.JOIN;
+        return MessageEnum.FLUSH;
     }
 
     @Override

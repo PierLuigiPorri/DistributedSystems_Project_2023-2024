@@ -1,22 +1,19 @@
 package Messages;
 
-import Messages.Message;
+public class LeaveMessage extends Message {
 
-import java.net.InetAddress;
-
-public class PingMessage extends Message {
-
-    public PingMessage(int sourceId) {
+    public LeaveMessage(int sourceId) {
         super(sourceId);
     }
 
     @Override
     public MessageEnum getType() {
-        return MessageEnum.PING;
+        return MessageEnum.LEAVE;
     }
 
     @Override
     public int getSourceId() {
         return sourceId;
     }
+
 }
