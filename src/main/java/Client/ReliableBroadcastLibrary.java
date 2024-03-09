@@ -33,32 +33,30 @@ public class ReliableBroadcastLibrary {
         switch (message.getType()) {
             case CONTENT:
                 // print the message
-                if (message instanceof ContentMessage) {
-                    ContentMessage contentMessage = (ContentMessage) message;
-                    System.out.println(contentMessage.getMessage());
-                }
+                ContentMessage contentMessage = (ContentMessage) message;
+                node.queueUnstableMessage(message);
+                //TODO:actually process the message
+                System.out.println(contentMessage.getMessage());
+
                 break;
             case JOIN:
                 // add the new node to the view
-                if (message instanceof JoinMessage) {
                     JoinMessage joinMessage = (JoinMessage) message;
                     // TRIGGERA VIEWCHANGE   view.add(joinMessage.getNode().getAddress());
-                }
+
                 break;
             case VIEW_CHANGE:
                 // update the view
-                if (message instanceof ViewChangeMessage) {
                     ViewChangeMessage viewChangeMessage = (ViewChangeMessage) message;
                     // CREARE NUOVA VIEW    view = viewChangeMessage.getView();
-                }
+
                 break;
             case PING:
                 // reset the timer for the sender
-                if (message instanceof PingMessage) {
                     PingMessage pingMessage = (PingMessage) message;
                     //send messsage back to the sender of the ping
                     //TODO: send(new AckMessage(this.address, pingMessage.getSequenceNumber(), this.id, pingMessage.getSource()));
-                }
+
                 break;
         }
     }
@@ -79,5 +77,9 @@ public class ReliableBroadcastLibrary {
             DatagramPacket packet = new DatagramPacket(buf, buf.length, peer.getAddress(), peer.getPort());
             ioSocket.send(packet);
         }
+    }
+
+    public void triggerViewChange(String type, int Node) {
+        this.node.setState(State.VIEW_CHANGE);
     }
 }

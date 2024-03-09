@@ -23,7 +23,6 @@ public class DeliverTask extends RunningTask implements Runnable {
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
-
         }
     }
 }

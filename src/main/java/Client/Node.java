@@ -33,17 +33,37 @@ public class Node {
     public void queueUnstableMessage(Message message){
         this.unstableMessageQueue.add(message);
     }
+    public void dequeueUnstableMessage() throws InterruptedException {
+        this.unstableMessageQueue.take();
+    }
 
     public void installNewView(List<Peer> newView){
         this.view = newView;
     }
 
     public void initializeTimer() {
-        //TODO: for (Client.Node node : view)
         this.viewTimers=new HashMap<>();
         for (Peer node : view) {
             this.viewTimers.put(node.getId(), 0);
         }
+    }
+
+    public void resetTimer(int id){
+        this.viewTimers.put(id, 0);
+    }
+
+    public void incrementTimers(){
+        viewTimers.replaceAll((i, v) -> viewTimers.get(i) + 1);
+    }
+
+
+    public int checkIfSomeoneIsDead() {
+        for (Peer node : view) {
+            if (viewTimers.get(node.getId()) > 3) {
+                return node.getId();
+            }
+        }
+        return -1;
     }
 
     // Getters and setters
@@ -79,4 +99,5 @@ public class Node {
     public void setState(State state) {
         this.state = state;
     }
+
 }
