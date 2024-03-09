@@ -1,4 +1,11 @@
 package Client;
+//Reliable broadcast library
+//Implement a library for reliable broadcast communication among a set of faulty processes, plus a simple application to test it (you are free to choose the application you prefer to highlight the characteristics of the library).
+//The library must guarantee virtual synchrony, while ordering should be at least fifo.
+//The project can be implemented as a real distributed application (for example, in Java) or it can be simulated using OmNet++.
+//Assumptions:
+//Assume (and leverage) a LAN scenario (i.e., link-layer broadcast is available).
+//You may also assume no processes fail during the time required for previous failures to be recovered.
 
 import Client.Tasks.ReceiverTask;
 import Messages.*;

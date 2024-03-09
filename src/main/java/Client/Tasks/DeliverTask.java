@@ -17,7 +17,7 @@ public class DeliverTask extends RunningTask implements Runnable {
     @Override
     public void run() {
         try {
-            Message processingMessage=this.library.getNode().dequeueMessage();
+            Message processingMessage=this.library.getNode().dequeueIncomingMessage();
             if(processingMessage!=null){
                 this.library.processMessage(processingMessage, this.library.getNode().getView());
             }
