@@ -70,9 +70,9 @@ public class ReliableBroadcastLibrary {
         return this.node;
     }
 
-    public void send(Message message, List<Peer> view) throws IOException {
+    public void send(Message message) throws IOException {
         // send the ping to all nodes in the view
-        for (Peer peer : view) {
+        for (Peer peer : this.node.getView()) {
             byte[] buf = message.getSerializedString().getBytes();
             DatagramPacket packet = new DatagramPacket(buf, buf.length, peer.getAddress(), peer.getPort());
             ioSocket.send(packet);

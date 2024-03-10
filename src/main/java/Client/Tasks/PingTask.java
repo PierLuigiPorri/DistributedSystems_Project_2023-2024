@@ -1,6 +1,7 @@
 package Client.Tasks;
 
 import Client.ReliableBroadcastLibrary;
+import Client.State;
 import Messages.PingMessage;
 
 import java.io.IOException;
@@ -17,9 +18,9 @@ public class PingTask extends RunningTask implements Runnable {
     public void run() {
         try {
             //TODO: CHECK IT OUT
-            while (true/*this.library.getNode().getState().equals("RUNNING")*/) {
+            while (this.library.getNode().getState().equals(State.NORMAL)) {
                 sleep(50);
-                this.library.send(new PingMessage(this.library.getNode().getId()), this.library.getNode().getView());
+                this.library.send(new PingMessage(this.library.getNode().getId()));
             }
         } catch (InterruptedException | IOException e){
             e.printStackTrace();

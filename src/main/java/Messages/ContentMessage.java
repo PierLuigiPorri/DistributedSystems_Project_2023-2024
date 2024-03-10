@@ -23,4 +23,8 @@ public class ContentMessage extends Message {
     public String getMessage() {
         return message;
     }
+
+    public String toCommitString(){
+        return sourceId + "sent: " + message;
+    }
 }

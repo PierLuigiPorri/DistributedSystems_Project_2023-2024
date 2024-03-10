@@ -1,28 +1,38 @@
 package Client;
 
+import Messages.ContentMessage;
 import Messages.Message;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class Node {
     private List<Peer> view;
     private HashMap<Integer, Integer> viewTimers;
     private int id;      //TODO: set this when receiving a new view after a join
     private State state;
+    private final Logger memory;
 
     private final LinkedBlockingQueue<Message> incomingMessageQueue;
     private final LinkedBlockingQueue<Message> unstableMessageQueue;
     private final LinkedBlockingQueue<Message> outgoingMessageQueue;
 
-    public Node() {
+    public Node() throws IOException {
+        this.memory = Logger.getLogger("memory");
+        FileHandler fh = new FileHandler("memory.log");
+        this.memory.addHandler(fh);
+        fh.setFormatter(new SimpleFormatter());
         this.incomingMessageQueue = new LinkedBlockingQueue<>();
         this.unstableMessageQueue = new LinkedBlockingQueue<>();
         this.outgoingMessageQueue = new LinkedBlockingQueue<>();
     }
 
-    public void queueMessage(Message message){
+    public void queueIncomingMessage(Message message){
         this.incomingMessageQueue.add(message);
     }
 
@@ -35,6 +45,14 @@ public class Node {
     }
     public void dequeueUnstableMessage() throws InterruptedException {
         this.unstableMessageQueue.take();
+    }
+
+    public void queueOutgoingMessage(Message message){
+        this.outgoingMessageQueue.add(message);
+    }
+
+    public Message dequeueOutgoingMessage() throws InterruptedException {
+        return this.outgoingMessageQueue.take();
     }
 
     public void installNewView(List<Peer> newView){
@@ -64,6 +82,10 @@ public class Node {
             }
         }
         return -1;
+    }
+
+    public void commit(ContentMessage message) {
+        memory.info(message.toCommitString());
     }
 
     // Getters and setters

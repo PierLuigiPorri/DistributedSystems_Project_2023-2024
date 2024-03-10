@@ -1,6 +1,5 @@
 package Client.Tasks;
 
-import Client.Node;
 import Client.ReliableBroadcastLibrary;
 import Messages.Message;
 
@@ -28,7 +27,7 @@ public class ReceiverTask implements Runnable {
                 String receivedData = new String(packet.getData(), 0, packet.getLength());
                 Message message = Message.deserialize(receivedData);
                 if (message != null) {
-                    this.library.getNode().queueMessage(message);
+                    this.library.getNode().queueIncomingMessage(message);
                 } else {
                     System.err.println("Failed to deserialize received message.");
                 }
