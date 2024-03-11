@@ -20,6 +20,8 @@ public class Node {
     private final LinkedBlockingQueue<Message> incomingMessageQueue;
     private final LinkedBlockingQueue<Message> unstableMessageQueue;
     private final LinkedBlockingQueue<Message> outgoingMessageQueue;
+    private final LinkedBlockingQueue<Message> stableMessageQueue;
+    private final HashMap <Integer, Integer> acks; //sequence number, number of acks
 
     public Node() throws IOException {
         this.memory = Logger.getLogger("memory");
@@ -29,6 +31,8 @@ public class Node {
         this.incomingMessageQueue = new LinkedBlockingQueue<>();
         this.unstableMessageQueue = new LinkedBlockingQueue<>();
         this.outgoingMessageQueue = new LinkedBlockingQueue<>();
+        this.stableMessageQueue = new LinkedBlockingQueue<>();
+        this.acks = new HashMap<>();
     }
 
     public void queueIncomingMessage(Message message){
@@ -52,6 +56,14 @@ public class Node {
 
     public Message dequeueOutgoingMessage() throws InterruptedException {
         return this.outgoingMessageQueue.take();
+    }
+
+    public void queueStableMessage(Message message){
+        this.stableMessageQueue.add(message);
+    }
+
+    public Message dequeueStableMessage() throws InterruptedException {
+        return this.stableMessageQueue.take();
     }
 
     public void installNewView(List<Peer> newView){
@@ -115,6 +127,10 @@ public class Node {
 
     public void setState(State state) {
         this.state = state;
+    }
+
+    public HashMap<Integer, Integer> getAcks() {
+        return this.acks;
     }
 
     public LinkedBlockingQueue<Message> getIncomingMessageQueue() {

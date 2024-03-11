@@ -21,6 +21,9 @@ public class ReliableBroadcastLibrary {
     private final Node node;
     MulticastSocket ioSocket;
 
+    private int contentMessageSequenceNumber;
+    private int viewSize;
+    private ContentMessage contentMessage;
 
     public ReliableBroadcastLibrary(int port) throws IOException {
         ioSocket = new MulticastSocket(port);
@@ -47,14 +50,23 @@ public class ReliableBroadcastLibrary {
         sendingThread.start();
     }
 
-    public void processMessage(Message message, List<Peer> view) {
+    public void processMessage(Message message, List<Peer> view) throws IOException {
         switch (message.getType()) {
             case CONTENT:
                 // print the message
                 ContentMessage contentMessage = (ContentMessage) message;
-                node.queueUnstableMessage(message);
-                //TODO:actually process the message
+                this.node.queueUnstableMessage(message);
                 System.out.println(contentMessage.getMessage());
+                ProcessTask processTask = new ProcessTask(this);
+                //create a new thread to process a message for each message we receive.
+                Thread processThread = new Thread(processTask);
+
+                //process the message, so to check if it is stable
+                setValues(contentMessage.getSequenceNumber(), view.size(), contentMessage);
+                processThread.start();
+                // send an ack back to all the nodes in the view
+                this.send(new AckMessage(this.getNode().getId(), contentMessage.getSequenceNumber()));
+
 
                 break;
             case JOIN:
@@ -72,9 +84,13 @@ public class ReliableBroadcastLibrary {
             case PING:
                 // reset the timer for the sender
                     PingMessage pingMessage = (PingMessage) message;
-                    //send messsage back to the sender of the ping
-                    //TODO: send(new AckMessage(this.address, pingMessage.getSequenceNumber(), this.id, pingMessage.getSource()));
+                    this.getNode().resetTimer(pingMessage.getSourceId());
 
+                break;
+            case ACK:
+                // add the ack to the acks list.
+                    AckMessage ackMessage = (AckMessage) message;
+                    this.getNode().getAcks().put(ackMessage.getSequenceNumber(), this.getNode().getAcks().get(ackMessage.getSequenceNumber()) + 1);
                 break;
         }
     }
@@ -97,6 +113,24 @@ public class ReliableBroadcastLibrary {
             out.close();
             socket.close();
         }
+    }
+
+    public void setValues(int contentMessageSequenceNumber, int viewSize, ContentMessage contentMessage) {
+        this.contentMessageSequenceNumber = contentMessageSequenceNumber;
+        this.viewSize = viewSize;
+        this.contentMessage = contentMessage;
+    }
+
+    public int getContentMessageSequenceNumber() {
+        return this.contentMessageSequenceNumber;
+    }
+
+    public int getViewSize() {
+        return this.viewSize;
+    }
+
+    public ContentMessage getContentMessage() {
+        return this.contentMessage;
     }
 
     public void triggerViewChange(String type, int Node) {

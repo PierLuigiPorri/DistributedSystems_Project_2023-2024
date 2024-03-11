@@ -17,7 +17,6 @@ public class PingTask extends RunningTask implements Runnable {
     //this method sends a ping to all the nodes in the view, which is accessible by node.getView()
     public void run() {
         try {
-            //TODO: CHECK IT OUT
             while (this.library.getNode().getState().equals(State.NORMAL)) {
                 sleep(50);
                 this.library.send(new PingMessage(this.library.getNode().getId()));

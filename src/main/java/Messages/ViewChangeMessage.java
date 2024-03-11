@@ -4,9 +4,9 @@ import Client.Peer;
 import java.util.List;
 
 public class ViewChangeMessage extends Message {
-    private List<Peer> view;
+    private final List<Peer> view;
 
-    public ViewChangeMessage(int sourceId,List<Peer> view, List<Integer> viewIds) {
+    public ViewChangeMessage(int sourceId, List<Peer> view) {
         super(sourceId);
         this.view = view;
     }
