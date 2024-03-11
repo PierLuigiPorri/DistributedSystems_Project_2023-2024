@@ -1,6 +1,5 @@
 package Client;
 
-import Messages.ContentMessage;
 import Messages.Message;
 
 import java.io.IOException;
@@ -84,10 +83,6 @@ public class Node {
         return -1;
     }
 
-    public void commit(ContentMessage message) {
-        memory.info(message.toCommitString());
-    }
-
     // Getters and setters
 
     public List<Peer> getView() {
@@ -120,6 +115,10 @@ public class Node {
 
     public void setState(State state) {
         this.state = state;
+    }
+
+    public LinkedBlockingQueue<Message> getIncomingMessageQueue() {
+        return this.incomingMessageQueue;
     }
 
 }

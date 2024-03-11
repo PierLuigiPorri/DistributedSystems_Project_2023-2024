@@ -7,7 +7,7 @@ package Client;
 //Assume (and leverage) a LAN scenario (i.e., link-layer broadcast is available).
 //You may also assume no processes fail during the time required for previous failures to be recovered.
 
-import Client.Tasks.ReceiverTask;
+import Client.Tasks.*;
 import Messages.*;
 
 import java.io.IOException;
@@ -25,9 +25,26 @@ public class ReliableBroadcastLibrary {
     public ReliableBroadcastLibrary(int port) throws IOException {
         ioSocket = new MulticastSocket(port);
         node = new Node();
+
         ReceiverTask receiverTask = new ReceiverTask(this, port);
         Thread receiverThread = new Thread(receiverTask);
         receiverThread.start();
+
+        DeliverTask deliverTask = new DeliverTask(this);
+        Thread deliverThread = new Thread(deliverTask);
+        deliverThread.start();
+
+        PingTask pingTask = new PingTask(this);
+        Thread pingThread = new Thread(pingTask);
+        pingThread.start();
+
+        TimerTask timerTask = new TimerTask(this);
+        Thread timerThread = new Thread(timerTask);
+        timerThread.start();
+
+        SendingTask sendingTask = new SendingTask(this);
+        Thread sendingThread = new Thread(sendingTask);
+        sendingThread.start();
     }
 
     public void processMessage(Message message, List<Peer> view) {

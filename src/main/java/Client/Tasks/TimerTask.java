@@ -4,7 +4,7 @@ import Client.ReliableBroadcastLibrary;
 
 public class TimerTask extends RunningTask implements Runnable {
 
-    private TimerTask(ReliableBroadcastLibrary library) {
+    public TimerTask(ReliableBroadcastLibrary library) {
         super(library);
     }
     private int deadNode=-1;

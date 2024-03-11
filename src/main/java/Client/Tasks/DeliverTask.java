@@ -17,9 +17,13 @@ public class DeliverTask extends RunningTask implements Runnable {
     @Override
     public void run() {
         try {
-            Message processingMessage=this.library.getNode().dequeueIncomingMessage();
-            if(processingMessage!=null){
-                this.library.processMessage(processingMessage, this.library.getNode().getView());
+            while (true) {
+                if (!this.library.getNode().getIncomingMessageQueue().isEmpty()) {
+                    Message processingMessage = this.library.getNode().dequeueIncomingMessage();
+                    if (processingMessage != null) {
+                        this.library.processMessage(processingMessage, this.library.getNode().getView());
+                    }
+                }
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
