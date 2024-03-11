@@ -1,6 +1,5 @@
 package Messages;
 
-import java.net.InetAddress;
 
 public class ContentMessage extends Message {
     private final String message;
@@ -18,13 +17,19 @@ public class ContentMessage extends Message {
     }
 
     @Override
-    public int getSourceId() { return sourceId; }
+    public int getSourceId() {
+        return sourceId;
+    }
 
     public String getMessage() {
         return message;
     }
 
-    public String toCommitString(){
+    public String toCommitString() {
         return sourceId + "sent: " + message;
+    }
+
+    public int getSequenceNumber() {
+        return sequenceNumber;
     }
 }

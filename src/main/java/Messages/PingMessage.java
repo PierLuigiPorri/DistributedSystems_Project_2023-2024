@@ -1,9 +1,5 @@
 package Messages;
 
-import Messages.Message;
-
-import java.net.InetAddress;
-
 public class PingMessage extends Message {
 
     public PingMessage(int sourceId) {

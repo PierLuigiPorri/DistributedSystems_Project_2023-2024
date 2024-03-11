@@ -1,9 +1,6 @@
 package Messages;
 
 import Client.Peer;
-import Messages.Message;
-
-import java.net.InetAddress;
 import java.util.List;
 
 public class ViewChangeMessage extends Message {

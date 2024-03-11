@@ -4,8 +4,9 @@ import Client.ReliableBroadcastLibrary;
 import Messages.Message;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
+import java.io.ObjectInputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class ReceiverTask implements Runnable {
     private final ReliableBroadcastLibrary library;
@@ -19,20 +20,18 @@ public class ReceiverTask implements Runnable {
     @Override
     public void run() {
         try {
-            DatagramSocket socket = new DatagramSocket(port);
-            byte[] buffer = new byte[1024];
+            ServerSocket serverSocket = new ServerSocket(port);
             while (true) {
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                socket.receive(packet);
-                String receivedData = new String(packet.getData(), 0, packet.getLength());
-                Message message = Message.deserialize(receivedData);
+                Socket clientSocket = serverSocket.accept();
+                ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+                Message message = (Message) in.readObject();
                 if (message != null) {
                     this.library.getNode().queueIncomingMessage(message);
                 } else {
                     System.err.println("Failed to deserialize received message.");
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }

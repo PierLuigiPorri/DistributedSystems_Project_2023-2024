@@ -1,9 +1,11 @@
 package Messages;
 
 public class AckMessage extends Message {
+    private final int sequenceNumber;
 
-    public AckMessage(int sourceId) {
+    public AckMessage(int sourceId, int sequenceNumber) {
         super(sourceId);
+        this.sequenceNumber = sequenceNumber;
     }
 
     @Override
@@ -14,4 +16,7 @@ public class AckMessage extends Message {
     @Override
     public int getSourceId() { return sourceId; }
 
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
 }

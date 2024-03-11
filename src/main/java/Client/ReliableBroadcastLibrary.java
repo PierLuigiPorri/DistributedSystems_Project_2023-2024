@@ -11,8 +11,9 @@ import Client.Tasks.ReceiverTask;
 import Messages.*;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
+import java.io.ObjectOutputStream;
 import java.net.MulticastSocket;
+import java.net.Socket;
 import java.util.List;
 
 public class ReliableBroadcastLibrary {
@@ -71,11 +72,13 @@ public class ReliableBroadcastLibrary {
     }
 
     public void send(Message message) throws IOException {
-        // send the ping to all nodes in the view
+        // send the ping to all nodes in the view using TCP
         for (Peer peer : this.node.getView()) {
-            byte[] buf = message.getSerializedString().getBytes();
-            DatagramPacket packet = new DatagramPacket(buf, buf.length, peer.getAddress(), peer.getPort());
-            ioSocket.send(packet);
+            Socket socket = new Socket(peer.getAddress(), peer.getPort());
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.writeObject(message);
+            out.close();
+            socket.close();
         }
     }
 
