@@ -1,5 +1,6 @@
 package Client;
 
+import Messages.ContentMessage;
 import Messages.Message;
 
 import java.io.IOException;
@@ -16,10 +17,11 @@ public class Node {
     private int id;      //TODO: set this when receiving a new view after a join
     private State state;
     private final Logger memory;
+    private int sequenceNumber=0;
 
     private final LinkedBlockingQueue<Message> incomingMessageQueue;
     private final LinkedBlockingQueue<Message> unstableMessageQueue;
-    private final LinkedBlockingQueue<Message> outgoingMessageQueue;
+    private final LinkedBlockingQueue<ContentMessage> outgoingMessageQueue;
     private final LinkedBlockingQueue<Message> stableMessageQueue;
     private final HashMap <Integer, Integer> acks; //sequence number, number of acks
 
@@ -50,12 +52,16 @@ public class Node {
         this.unstableMessageQueue.take();
     }
 
-    public void queueOutgoingMessage(Message message){
+    public void queueOutgoingMessage(ContentMessage message){
         this.outgoingMessageQueue.add(message);
     }
 
-    public Message dequeueOutgoingMessage() throws InterruptedException {
+    public ContentMessage dequeueOutgoingMessage() throws InterruptedException {
         return this.outgoingMessageQueue.take();
+    }
+
+    public ContentMessage peekOutgoingMessage() {
+        return this.outgoingMessageQueue.peek();
     }
 
     public void queueStableMessage(Message message){
@@ -88,7 +94,7 @@ public class Node {
 
     public int checkIfSomeoneIsDead() {
         for (Peer node : view) {
-            if (viewTimers.get(node.getId()) > 3) {
+            if (viewTimers.get(node.getId()) > 2) {
                 return node.getId();
             }
         }
@@ -129,12 +135,31 @@ public class Node {
         this.state = state;
     }
 
-    public HashMap<Integer, Integer> getAcks() {
-        return this.acks;
+    public int getAcks(int sequenceNumber) {
+        return this.acks.get(sequenceNumber);
+    }
+
+    public void incrementAcks(int sequenceNumber) {
+        this.acks.put(sequenceNumber, this.acks.get(sequenceNumber) + 1);
+    }
+
+    public void removeAcks(int sequenceNumber) {
+        this.acks.remove(sequenceNumber);
     }
 
     public LinkedBlockingQueue<Message> getIncomingMessageQueue() {
         return this.incomingMessageQueue;
     }
 
+    public void incrementSequenceNumber(){
+        this.sequenceNumber++;
+    }
+
+    public void decrementSequenceNumber(){
+        this.sequenceNumber--;
+    }
+
+    public int getSequenceNumber() {
+        return this.sequenceNumber;
+    }
 }

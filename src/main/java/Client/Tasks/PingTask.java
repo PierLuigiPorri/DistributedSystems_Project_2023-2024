@@ -18,7 +18,7 @@ public class PingTask extends RunningTask implements Runnable {
     public void run() {
         try {
             while (this.library.getNode().getState().equals(State.NORMAL)) {
-                sleep(50);
+                sleep(250);
                 this.library.send(new PingMessage(this.library.getNode().getId()));
             }
         } catch (InterruptedException | IOException e){

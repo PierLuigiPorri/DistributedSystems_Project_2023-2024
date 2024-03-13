@@ -3,7 +3,7 @@ package Messages;
 
 public class ContentMessage extends Message {
     private final String message;
-    private final int sequenceNumber;
+    private int sequenceNumber;
 
     public ContentMessage(String message, int sourceId, int sequenceNumber) {
         super(sourceId);
@@ -31,5 +31,9 @@ public class ContentMessage extends Message {
 
     public int getSequenceNumber() {
         return sequenceNumber;
+    }
+
+    public void setSequenceNumber(int sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
     }
 }

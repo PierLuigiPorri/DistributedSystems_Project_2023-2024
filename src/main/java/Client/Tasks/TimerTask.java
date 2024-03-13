@@ -7,15 +7,14 @@ public class TimerTask extends RunningTask implements Runnable {
     public TimerTask(ReliableBroadcastLibrary library) {
         super(library);
     }
-    private int deadNode=-1;
 
     public void run() {
         this.library.getNode().initializeTimer();
         while (true) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(300);
                 this.library.getNode().incrementTimers();
-                deadNode = this.library.getNode().checkIfSomeoneIsDead();
+                int deadNode = this.library.getNode().checkIfSomeoneIsDead();
                 if (deadNode != -1) {
                     this.library.triggerViewChange("remove", deadNode);
                     break;

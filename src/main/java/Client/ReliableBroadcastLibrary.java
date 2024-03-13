@@ -65,7 +65,7 @@ public class ReliableBroadcastLibrary {
                 setValues(contentMessage.getSequenceNumber(), view.size(), contentMessage);
                 processThread.start();
                 // send an ack back to all the nodes in the view
-                this.send(new AckMessage(this.getNode().getId(), contentMessage.getSequenceNumber()));
+                this.send(new AckMessage(this.getNode().getId(), contentMessage.getSequenceNumber(), contentMessage.getSourceId()));
 
 
                 break;
@@ -90,7 +90,7 @@ public class ReliableBroadcastLibrary {
             case ACK:
                 // add the ack to the acks list.
                     AckMessage ackMessage = (AckMessage) message;
-                    this.getNode().getAcks().put(ackMessage.getSequenceNumber(), this.getNode().getAcks().get(ackMessage.getSequenceNumber()) + 1);
+                    this.getNode().incrementAcks(ackMessage.getSequenceNumber());
                 break;
         }
     }
