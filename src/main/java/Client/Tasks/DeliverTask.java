@@ -21,7 +21,7 @@ public class DeliverTask extends RunningTask implements Runnable {
                 if (!this.library.getNode().getIncomingMessageQueue().isEmpty()) {
                     Message processingMessage = this.library.getNode().dequeueIncomingMessage();
                     if (processingMessage != null) {
-                        this.library.processMessage(processingMessage, this.library.getNode().getView());
+                        this.library.processMessage(processingMessage);
                     }
                 }
             }

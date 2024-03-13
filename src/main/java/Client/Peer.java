@@ -6,7 +6,7 @@ public class Peer {
     private final int id;
     private final InetAddress address;
     private int sequenceNumber;
-    private int port;
+    private final int port;
 
     public Peer(InetAddress address, int id, int sequenceNumber, int port) {
         this.address = address;

@@ -2,12 +2,12 @@ package Messages;
 
 
 public class ContentMessage extends Message {
-    private final String message;
+    private final String payload;
     private int sequenceNumber;
 
-    public ContentMessage(String message, int sourceId, int sequenceNumber) {
+    public ContentMessage(String payload, int sourceId, int sequenceNumber) {
         super(sourceId);
-        this.message = message;
+        this.payload = payload;
         this.sequenceNumber = sequenceNumber;
     }
 
@@ -21,12 +21,12 @@ public class ContentMessage extends Message {
         return sourceId;
     }
 
-    public String getMessage() {
-        return message;
+    public String getPayload() {
+        return payload;
     }
 
     public String toCommitString() {
-        return sourceId + "sent: " + message;
+        return sourceId + "sent: " + this.payload;
     }
 
     public int getSequenceNumber() {

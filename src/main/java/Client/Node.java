@@ -17,13 +17,12 @@ public class Node {
     private int id;      //TODO: set this when receiving a new view after a join
     private State state;
     private final Logger memory;
-    private int sequenceNumber=0;
+    private int sequenceNumber = 0;
 
     private final LinkedBlockingQueue<Message> incomingMessageQueue;
-    private final LinkedBlockingQueue<Message> unstableMessageQueue;
+    private final LinkedBlockingQueue<ContentMessage> unstableMessageQueue;
     private final LinkedBlockingQueue<ContentMessage> outgoingMessageQueue;
-    private final LinkedBlockingQueue<Message> stableMessageQueue;
-    private final HashMap <Integer, Integer> acks; //sequence number, number of acks
+    private final HashMap<Tuple, Integer> acks; //Message, number of acks
 
     public Node() throws IOException {
         this.memory = Logger.getLogger("memory");
@@ -33,11 +32,10 @@ public class Node {
         this.incomingMessageQueue = new LinkedBlockingQueue<>();
         this.unstableMessageQueue = new LinkedBlockingQueue<>();
         this.outgoingMessageQueue = new LinkedBlockingQueue<>();
-        this.stableMessageQueue = new LinkedBlockingQueue<>();
         this.acks = new HashMap<>();
     }
 
-    public void queueIncomingMessage(Message message){
+    public void queueIncomingMessage(Message message) {
         this.incomingMessageQueue.add(message);
     }
 
@@ -45,14 +43,15 @@ public class Node {
         return this.incomingMessageQueue.take();
     }
 
-    public void queueUnstableMessage(Message message){
+    public void queueUnstableMessage(ContentMessage message) {
         this.unstableMessageQueue.add(message);
     }
-    public void dequeueUnstableMessage() throws InterruptedException {
-        this.unstableMessageQueue.take();
+
+    public ContentMessage dequeueUnstableMessage() throws InterruptedException {
+        return this.unstableMessageQueue.take();
     }
 
-    public void queueOutgoingMessage(ContentMessage message){
+    public void queueOutgoingMessage(ContentMessage message) {
         this.outgoingMessageQueue.add(message);
     }
 
@@ -64,30 +63,33 @@ public class Node {
         return this.outgoingMessageQueue.peek();
     }
 
-    public void queueStableMessage(Message message){
-        this.stableMessageQueue.add(message);
+    public void writeOnDisk(ContentMessage message) {
+        String address = "";
+        for (Peer node : view) {
+            if (node.getId() == message.getSourceId()) {
+                address = node.getAddress().toString();
+            }
+
+            this.memory.info(message.toCommitString() + "from" + address);
+        }
     }
 
-    public Message dequeueStableMessage() throws InterruptedException {
-        return this.stableMessageQueue.take();
-    }
-
-    public void installNewView(List<Peer> newView){
+    public void installNewView(List<Peer> newView) {
         this.view = newView;
     }
 
     public void initializeTimer() {
-        this.viewTimers=new HashMap<>();
+        this.viewTimers = new HashMap<>();
         for (Peer node : view) {
             this.viewTimers.put(node.getId(), 0);
         }
     }
 
-    public void resetTimer(int id){
+    public void resetTimer(int id) {
         this.viewTimers.put(id, 0);
     }
 
-    public void incrementTimers(){
+    public void incrementTimers() {
         viewTimers.replaceAll((i, v) -> viewTimers.get(i) + 1);
     }
 
@@ -107,24 +109,8 @@ public class Node {
         return view;
     }
 
-    public HashMap<Integer, Integer> getViewTimers() {
-        return viewTimers;
-    }
-
-    public void setView(List<Peer> view) {
-        this.view = view;
-    }
-
-    public void setViewTimers(HashMap<Integer, Integer> viewTimers) {
-        this.viewTimers = viewTimers;
-    }
-
     public int getId() {
         return this.id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public State getState() {
@@ -135,31 +121,39 @@ public class Node {
         this.state = state;
     }
 
-    public int getAcks(int sequenceNumber) {
-        return this.acks.get(sequenceNumber);
+    public int getAcks(Tuple message) {
+        return this.acks.get(message);
     }
 
-    public void incrementAcks(int sequenceNumber) {
-        this.acks.put(sequenceNumber, this.acks.get(sequenceNumber) + 1);
+    public void incrementAcks(Tuple message) {
+        this.acks.put(message, this.acks.get(message) + 1);
     }
 
-    public void removeAcks(int sequenceNumber) {
-        this.acks.remove(sequenceNumber);
+    public void removeAcks(Tuple message) {
+        this.acks.remove(message);
+    }
+
+    public void dropAcks(Tuple message) {
+        this.acks.put(message, -1);
     }
 
     public LinkedBlockingQueue<Message> getIncomingMessageQueue() {
         return this.incomingMessageQueue;
     }
 
-    public void incrementSequenceNumber(){
+    public void incrementSequenceNumber() {
         this.sequenceNumber++;
-    }
-
-    public void decrementSequenceNumber(){
-        this.sequenceNumber--;
     }
 
     public int getSequenceNumber() {
         return this.sequenceNumber;
+    }
+
+    public ContentMessage peekUnstableMessage() {
+        return this.unstableMessageQueue.peek();
+    }
+
+    public LinkedBlockingQueue<ContentMessage> getUnstableMessageQueue() {
+        return this.unstableMessageQueue;
     }
 }

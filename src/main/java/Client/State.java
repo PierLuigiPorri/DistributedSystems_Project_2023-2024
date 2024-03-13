@@ -4,5 +4,6 @@ public enum State {
     JOIN,
     VIEW_CHANGE,
     NORMAL,
-    DISCONNECTED
+    DISCONNECTED,
+    LEAVE
 }

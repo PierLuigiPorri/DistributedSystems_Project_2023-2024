@@ -21,9 +21,8 @@ public class ReliableBroadcastLibrary {
     private final Node node;
     MulticastSocket ioSocket;
 
-    private int contentMessageSequenceNumber;
-    private int viewSize;
-    private ContentMessage contentMessage;
+    private int countFlush = 0;
+    private List<Peer> newView;
 
     public ReliableBroadcastLibrary(int port) throws IOException {
         ioSocket = new MulticastSocket(port);
@@ -50,48 +49,64 @@ public class ReliableBroadcastLibrary {
         sendingThread.start();
     }
 
-    public void processMessage(Message message, List<Peer> view) throws IOException {
+    public void processMessage(Message message) throws IOException {
         switch (message.getType()) {
-            case CONTENT:
+            case CONTENT -> {
                 // print the message
                 ContentMessage contentMessage = (ContentMessage) message;
-                this.node.queueUnstableMessage(message);
-                System.out.println(contentMessage.getMessage());
+                this.node.queueUnstableMessage(contentMessage);
+                System.out.println(contentMessage.getPayload());
                 ProcessTask processTask = new ProcessTask(this);
                 //create a new thread to process a message for each message we receive.
                 Thread processThread = new Thread(processTask);
-
                 //process the message, so to check if it is stable
-                setValues(contentMessage.getSequenceNumber(), view.size(), contentMessage);
                 processThread.start();
-                // send an ack back to all the nodes in the view
-                this.send(new AckMessage(this.getNode().getId(), contentMessage.getSequenceNumber(), contentMessage.getSourceId()));
+            }
+            case JOIN -> // add the new node to the view
+                    triggerViewChange("add", message.getSourceId());
 
-
-                break;
-            case JOIN:
-                // add the new node to the view
-                    JoinMessage joinMessage = (JoinMessage) message;
-                    // TRIGGERA VIEWCHANGE   view.add(joinMessage.getNode().getAddress());
-
-                break;
-            case VIEW_CHANGE:
+            case VIEW_CHANGE -> {
+                this.node.setState(State.VIEW_CHANGE);
                 // update the view
-                    ViewChangeMessage viewChangeMessage = (ViewChangeMessage) message;
-                    // CREARE NUOVA VIEW    view = viewChangeMessage.getView();
-
-                break;
-            case PING:
+                for (ContentMessage messages : this.node.getUnstableMessageQueue()) {
+                    send(messages);
+                }
+                ViewChangeMessage viewChangeMessage = (ViewChangeMessage) message;
+                newView = viewChangeMessage.getView();
+                // CREATE NEW VIEW   view = viewChangeMessage.getView();
+                send(new FlushMessage(this.node.getId()));
+            }
+            case PING -> {
                 // reset the timer for the sender
-                    PingMessage pingMessage = (PingMessage) message;
-                    this.getNode().resetTimer(pingMessage.getSourceId());
-
-                break;
-            case ACK:
+                PingMessage pingMessage = (PingMessage) message;
+                this.getNode().resetTimer(pingMessage.getSourceId());
+            }
+            case ACK -> {
                 // add the ack to the acks list.
-                    AckMessage ackMessage = (AckMessage) message;
-                    this.getNode().incrementAcks(ackMessage.getSequenceNumber());
-                break;
+                AckMessage ackMessage = (AckMessage) message;
+                Tuple tuple = new Tuple(ackMessage.getSequenceNumber(), ackMessage.getSenderId());
+                this.getNode().incrementAcks(tuple);
+            }
+            case DROP -> {
+                DropMessage dropMessage = (DropMessage) message;
+                Tuple dropTuple = new Tuple(dropMessage.getSequenceNumber(), dropMessage.getSourceId());
+                this.getNode().dropAcks(dropTuple);
+            }
+            case FLUSH -> {
+                countFlush++;
+                if (countFlush == this.getNode().getView().size() - 1) {
+
+                    // flush all messages from the unstableQueueMessages
+                    for (ContentMessage content : this.getNode().getUnstableMessageQueue()) {
+                        this.getNode().writeOnDisk(content);
+                    }
+                    this.getNode().getUnstableMessageQueue().clear();
+                    this.node.installNewView(newView);
+                    this.node.setState(State.NORMAL);
+                }
+            }
+            case LEAVE -> // remove the node from the view
+                    triggerViewChange("remove", message.getSourceId());
         }
     }
 
@@ -115,22 +130,8 @@ public class ReliableBroadcastLibrary {
         }
     }
 
-    public void setValues(int contentMessageSequenceNumber, int viewSize, ContentMessage contentMessage) {
-        this.contentMessageSequenceNumber = contentMessageSequenceNumber;
-        this.viewSize = viewSize;
-        this.contentMessage = contentMessage;
-    }
-
-    public int getContentMessageSequenceNumber() {
-        return this.contentMessageSequenceNumber;
-    }
-
     public int getViewSize() {
-        return this.viewSize;
-    }
-
-    public ContentMessage getContentMessage() {
-        return this.contentMessage;
+        return this.getNode().getView().size();
     }
 
     public void triggerViewChange(String type, int Node) {
