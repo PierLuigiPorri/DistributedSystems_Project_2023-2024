@@ -5,8 +5,6 @@ import Messages.PingMessage;
 
 import java.io.IOException;
 
-import static java.lang.Thread.sleep;
-
 public class PingTask extends RunningTask{
 
     public PingTask(ReliableBroadcastLibrary library) {

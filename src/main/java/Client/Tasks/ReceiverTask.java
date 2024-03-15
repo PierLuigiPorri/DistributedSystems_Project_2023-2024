@@ -5,24 +5,21 @@ import Messages.Message;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 
-public class ReceiverTask extends Thread{
+public class ReceiverTask extends Thread {
     private final ReliableBroadcastLibrary library;
-    private final int port;
+    private final Socket clientSocket;
 
-    public ReceiverTask(ReliableBroadcastLibrary library, int port) {
+    public ReceiverTask(ReliableBroadcastLibrary library, Socket clientSocket) {
         this.library = library;
-        this.port = port;
+        this.clientSocket = clientSocket;
     }
 
-    @Override
+    @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
         try {
-            ServerSocket serverSocket = new ServerSocket(port);
             while (true) {
-                Socket clientSocket = serverSocket.accept();
                 ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
                 Message message = (Message) in.readObject();
                 if (message != null) {

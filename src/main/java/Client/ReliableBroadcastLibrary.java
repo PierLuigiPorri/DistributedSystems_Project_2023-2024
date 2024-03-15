@@ -13,38 +13,28 @@ import Messages.*;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
-import java.net.MulticastSocket;
+
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 
 public class ReliableBroadcastLibrary {
 
     private final Node node;
-    MulticastSocket ioSocket;
-
-    private Thread receiverThread;
-    private Thread deliverThread;
-    private Thread pingThread;
-    private Thread timerThread;
-    private ArrayList<Thread> sendingThreads;
-
-    private ArrayList<Thread> processThreads;
+    private final ArrayList<Thread> sendingThreads;
+    private final ArrayList<Thread> processThreads;
 
     private int countFlush = 0;
     private ArrayList<Peer> newView;
 
     public ReliableBroadcastLibrary(int port) throws IOException {
-        ioSocket = new MulticastSocket(port);
         node = new Node();
-
-        receiverThread = new ReceiverTask(this, port);
-        receiverThread.start();
-        deliverThread = new DeliverTask(this);
+        ConnectionManager connectionManager = new ConnectionManager(this, port);
+        connectionManager.start();
+        Thread deliverThread = new DeliverTask(this);
         deliverThread.start();
-        sendingThreads = new ArrayList<Thread>();
-        processThreads = new ArrayList<Thread>();
+        sendingThreads = new ArrayList<>();
+        processThreads = new ArrayList<>();
     }
 
     public void processMessage(Message message) throws IOException {
@@ -108,9 +98,9 @@ public class ReliableBroadcastLibrary {
                     this.getNode().getUnstableMessageQueue().clear();
                     this.node.installNewView(newView);
                     this.node.setState(State.NORMAL);
-                    pingThread = new Thread(new PingTask(this));
+                    Thread pingThread = new Thread(new PingTask(this));
                     pingThread.start();
-                    timerThread = new TimerTask(this);
+                    Thread timerThread = new TimerTask(this);
                     timerThread.start();
                 }
             }
@@ -147,12 +137,61 @@ public class ReliableBroadcastLibrary {
             view = this.newView;
         }
         for (Peer peer : view) {
-                Socket socket = new Socket(peer.getAddress(), peer.getPort());
-                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                out.writeObject(message);
-                out.close();
-                socket.close();
+            if (peer.getId() != this.getNode().getId()) {
+                Socket socket = this.getSocket(peer.getId());
+                if (this.hasConnection(peer.getId())) { // Ensure a valid connection exists
+                    ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+                    out.writeObject(message);
+                    out.close();
+                } else {
+                    System.err.println("No connection found for peer ID: " + peer.getId());
+                }
+            }
         }
+    }
+
+    //This method has to be called when a new node joins the network (as soon as the joining process ends).
+    //It sets up the Socket with the new node:
+    //This library's node will have in his view the new node and that new node will have the socket between this library's node and the new node.
+    public void saveConnection(int peerId, Socket clientSocket) throws IOException {
+        for (Peer peer : this.node.getView()) {
+            if (peer.getId() == peerId) {
+                if (!hasConnection(peerId)) {
+                    peer.setSocket(clientSocket);
+                }
+            }
+        }
+    }
+
+    // Method to close a connection with a peer
+    public void closeConnection(int peerId) throws IOException {
+        for (Peer peer : this.node.getView()) {
+            if (peer.getId() == peerId) {
+                Socket socket = peer.getSocket();
+                if (hasConnection(peerId)) {
+                    socket.close();
+                    // Remove the connection from the map
+                    peer.setSocket(null);
+                }
+            }
+        }
+    }
+
+    // Method to get the Socket associated with a peer
+    public Socket getSocket(int peerId) {
+        for (Peer peer : this.node.getView()) {
+            if (peer.getId() == peerId) return peer.getSocket();
+        }
+        return null;
+    }
+
+    // Method to check if a connection exists with a peer
+    public boolean hasConnection(int peerId) {
+        for (Peer peer : this.node.getView()) {
+            if (peer.getId() == peerId)
+                return peer.getSocket() != null;
+        }
+        return false;
     }
 
     public int getViewSize() {

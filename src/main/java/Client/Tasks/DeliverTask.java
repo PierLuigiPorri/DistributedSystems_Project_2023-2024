@@ -1,12 +1,9 @@
 package Client.Tasks;
 
-import Client.Node;
 import Client.ReliableBroadcastLibrary;
 import Messages.Message;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 
 public class DeliverTask extends RunningTask{
 
@@ -14,7 +11,7 @@ public class DeliverTask extends RunningTask{
         super(library);
     }
 
-    @Override
+    @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
         try {
             while (true) {

@@ -1,12 +1,14 @@
 package Client;
 
 import java.net.InetAddress;
+import java.net.Socket;
 
 public class Peer{
     private final int id;
     private final InetAddress address;
     private int sequenceNumber = 0;
     private final int port;
+    private Socket socket;
 
     public Peer(InetAddress address, int id, int port) {
         this.address = address;
@@ -24,6 +26,14 @@ public class Peer{
 
     public int getPort() {
         return port;
+    }
+
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
     }
 
     public int getSequenceNumber() {

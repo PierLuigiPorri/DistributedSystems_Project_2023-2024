@@ -1,6 +1,5 @@
 package Client.Tasks;
 
-import Client.Node;
 import Client.ReliableBroadcastLibrary;
 
 public abstract class RunningTask extends Thread{
