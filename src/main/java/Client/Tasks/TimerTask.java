@@ -2,7 +2,7 @@ package Client.Tasks;
 
 import Client.ReliableBroadcastLibrary;
 
-public class TimerTask extends RunningTask implements Runnable {
+public class TimerTask extends RunningTask{
 
     public TimerTask(ReliableBroadcastLibrary library) {
         super(library);
@@ -16,7 +16,7 @@ public class TimerTask extends RunningTask implements Runnable {
                 this.library.getNode().incrementTimers();
                 int deadNode = this.library.getNode().checkIfSomeoneIsDead();
                 if (deadNode != -1) {
-                    this.library.triggerViewChange("remove", deadNode);
+                    this.library.removePeer(deadNode);
                     break;
                 }
             } catch (Exception e) {

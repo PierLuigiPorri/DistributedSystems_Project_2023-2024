@@ -4,6 +4,7 @@ import Messages.ContentMessage;
 import Messages.Message;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -12,7 +13,7 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 public class Node {
-    private List<Peer> view;
+    private ArrayList<Peer> view;
     private HashMap<Integer, Integer> viewTimers;
     private int id;      //TODO: set this when receiving a new view after a join
     private State state;
@@ -33,6 +34,7 @@ public class Node {
         this.unstableMessageQueue = new LinkedBlockingQueue<>();
         this.outgoingMessageQueue = new LinkedBlockingQueue<>();
         this.acks = new HashMap<>();
+        this.state = State.JOINING;
     }
 
     public void queueIncomingMessage(Message message) {
@@ -74,7 +76,7 @@ public class Node {
         }
     }
 
-    public void installNewView(List<Peer> newView) {
+    public void installNewView(ArrayList<Peer> newView) {
         this.view = newView;
     }
 
@@ -105,7 +107,7 @@ public class Node {
 
     // Getters and setters
 
-    public List<Peer> getView() {
+    public ArrayList<Peer> getView() {
         return view;
     }
 
@@ -156,4 +158,5 @@ public class Node {
     public LinkedBlockingQueue<ContentMessage> getUnstableMessageQueue() {
         return this.unstableMessageQueue;
     }
+
 }

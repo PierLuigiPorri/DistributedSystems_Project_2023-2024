@@ -2,16 +2,15 @@ package Client;
 
 import java.net.InetAddress;
 
-public class Peer {
+public class Peer{
     private final int id;
     private final InetAddress address;
-    private int sequenceNumber;
+    private int sequenceNumber = 0;
     private final int port;
 
-    public Peer(InetAddress address, int id, int sequenceNumber, int port) {
+    public Peer(InetAddress address, int id, int port) {
         this.address = address;
         this.id = id;
-        this.sequenceNumber = sequenceNumber;
         this.port = port;
     }
 
@@ -35,4 +34,7 @@ public class Peer {
         this.sequenceNumber = sequenceNumber;
     }
 
+    public void incrementSequenceNumber() {
+        this.sequenceNumber++;
+    }
 }

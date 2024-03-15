@@ -8,7 +8,7 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class ReceiverTask implements Runnable {
+public class ReceiverTask extends Thread{
     private final ReliableBroadcastLibrary library;
     private final int port;
 

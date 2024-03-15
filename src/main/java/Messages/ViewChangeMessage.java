@@ -1,18 +1,20 @@
 package Messages;
 
 import Client.Peer;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class ViewChangeMessage extends Message {
-    private final List<Peer> view;
+    private final ArrayList<Peer> view;
 
-    public ViewChangeMessage(int sourceId, List<Peer> view) {
+    public ViewChangeMessage(int sourceId, ArrayList<Peer> view) {
         super(sourceId);
         this.view = view;
     }
 
 
-    public List<Peer> getView() {
+    public ArrayList<Peer> getView() {
         return view;
     }
 

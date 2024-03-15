@@ -1,9 +1,9 @@
 package Client;
 
 public enum State {
-    JOIN,
+    JOINING,
     VIEW_CHANGE,
     NORMAL,
     DISCONNECTED,
-    LEAVE
+    LEAVING
 }

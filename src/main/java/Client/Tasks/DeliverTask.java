@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
-public class DeliverTask extends RunningTask implements Runnable {
+public class DeliverTask extends RunningTask{
 
     public DeliverTask(ReliableBroadcastLibrary library) {
         super(library);
