@@ -5,27 +5,16 @@ import java.net.Socket;
 
 public class Peer{
     private final int id;
-    private final InetAddress address;
     private int sequenceNumber = 0;
-    private final int port;
     private Socket socket;
 
-    public Peer(InetAddress address, int id, int port) {
-        this.address = address;
+    public Peer(int id, Socket socket) {
         this.id = id;
-        this.port = port;
+        this.socket = socket;
     }
 
     public int getId() {
         return id;
-    }
-
-    public InetAddress getAddress() {
-        return address;
-    }
-
-    public int getPort() {
-        return port;
     }
 
     public Socket getSocket() {

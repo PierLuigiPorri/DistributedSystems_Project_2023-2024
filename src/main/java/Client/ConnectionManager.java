@@ -19,6 +19,7 @@ public class ConnectionManager extends Thread {
     @Override
     public void run() {
         try {
+            //TODO: Here should be the code to connect so a given address
             // Create a ServerSocket to listen for incoming connections
             ServerSocket serverSocket = new ServerSocket(port);
 
@@ -28,10 +29,7 @@ public class ConnectionManager extends Thread {
                 Socket clientSocket = serverSocket.accept();
 
                 // Once a connection is accepted, create a ReceiverTask to handle it
-                ReceiverTask receiverTask = new ReceiverTask(library, clientSocket);
-                Thread receiverThread = new Thread(receiverTask);
-                receiverThread.start();
-
+                this.library.addPeer(clientSocket);
             }
         } catch (IOException e) {
             e.printStackTrace();
