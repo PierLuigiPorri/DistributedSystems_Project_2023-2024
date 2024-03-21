@@ -31,6 +31,7 @@ public class ReliableBroadcastLibrary {
 
     private int countFlush = 0;
     private ArrayList<Peer> newView;
+    private HashMap<Peer, Socket> sockets;
 
     public ReliableBroadcastLibrary(int port) throws IOException {
         node = new Node();
@@ -41,6 +42,7 @@ public class ReliableBroadcastLibrary {
         sendingThreads = new ArrayList<>();
         processThreads = new ArrayList<>();
         receiverThreads = new HashMap<>();
+        sockets = new HashMap<>();
     }
 
     public void processMessage(Message message) throws IOException {
@@ -132,7 +134,7 @@ public class ReliableBroadcastLibrary {
         return this.node;
     }
 
-    public void sendMulticast(Message message) throws IOException { //TODO: CHANGE THIS
+    public void sendMulticast(Message message) throws IOException {
         // send the ping to all nodes in the view using TCP
         ArrayList<Peer> view;
         if(this.node.getState().equals(State.NORMAL)) {
@@ -143,7 +145,7 @@ public class ReliableBroadcastLibrary {
         }
         for (Peer peer : view) {
             if (peer.getId() != this.getNode().getId()) {
-                Socket socket = this.getSocket(peer.getId());
+                Socket socket = this.getSocketFromId(peer.getId());
                 if (this.hasConnection(peer.getId())) { // Ensure a valid connection exists
                     ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
                     out.writeObject(message);
@@ -157,20 +159,13 @@ public class ReliableBroadcastLibrary {
 
 
     // Method to get the Socket associated with a peer
-    public Socket getSocket(int peerId) {
-        for (Peer peer : this.node.getView()) {
-            if (peer.getId() == peerId) return peer.getSocket();
-        }
-        return null;
+    public Socket getSocketFromId(int peerId) {
+        return sockets.get(this.node.getView().stream().filter(peer -> peer.getId() == peerId).findFirst().get());
     }
 
     // Method to check if a connection exists with a peer
     public boolean hasConnection(int peerId) {
-        for (Peer peer : this.node.getView()) {
-            if (peer.getId() == peerId)
-                return peer.getSocket() != null;
-        }
-        return false;
+        return getSocketFromId(peerId) != null;
     }
 
     public int getViewSize() {
@@ -189,7 +184,9 @@ public class ReliableBroadcastLibrary {
         this.newView = this.node.getView();
         this.receiverThreads.put(nextId, new ReceiverTask(this, clientSocket));
         this.receiverThreads.get(nextId).start();
-        this.newView.add(new Peer(nextId, clientSocket));
+        Peer peer = new Peer(nextId, clientSocket.getInetAddress(), clientSocket.getPort());
+        this.newView.add(peer);
+        this.sockets.put(peer, clientSocket);
         triggerViewChange();
     }
 
@@ -201,11 +198,11 @@ public class ReliableBroadcastLibrary {
                     .filter(peer -> peer.getId() == node && hasConnection(node))
                     .forEach(peer -> {
                         try {
-                            peer.getSocket().close();
+                            sockets.get(peer).close();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        peer.setSocket(null);
+                        sockets.remove(peer);
                     });
         }
         this.newView.removeIf(peer -> peer.getId() == node);
@@ -228,7 +225,7 @@ public class ReliableBroadcastLibrary {
         for (Peer peer : this.node.getView()) {
             if (peer.getId() != this.node.getId()) {
                 try {
-                    peer.getSocket().close();
+                    sockets.get(peer).close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
