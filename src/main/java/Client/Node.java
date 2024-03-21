@@ -34,6 +34,7 @@ public class Node {
         this.outgoingMessageQueue = new LinkedBlockingQueue<>();
         this.acks = new HashMap<>();
         this.state = State.JOINING;
+        this.view = new ArrayList<>();
     }
 
     public void queueIncomingMessage(Message message) {
@@ -68,7 +69,7 @@ public class Node {
         String address = "";
         for (Peer node : view) {
             if (node.getId() == message.getSourceId()) {
-                address = node.getAddress().toString();
+                // TODO: address = node.getAddress().toString();
             }
 
             this.memory.info(message.toCommitString() + "from" + address);
@@ -127,7 +128,11 @@ public class Node {
     }
 
     public void incrementAcks(Tuple message) {
-        this.acks.put(message, this.acks.get(message) + 1);
+        if (this.acks.containsKey(message)) {
+            this.acks.put(message, this.acks.get(message) + 1);
+        } else {
+            this.acks.put(message, 1);
+        }
     }
 
     public void removeAcks(Tuple message) {

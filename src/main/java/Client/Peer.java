@@ -1,9 +1,10 @@
 package Client;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.Socket;
 
-public class Peer{
+public class Peer implements Serializable {
     private final int id;
     private int sequenceNumber = 0;
 
@@ -19,10 +20,10 @@ public class Peer{
         return id;
     }
 
-    private InetAddress getAddress() {
+    public InetAddress getAddress() {
         return address;
     }
-    private int getPort() {
+    public int getPort() {
         return port;
     }
     public int getSequenceNumber() {

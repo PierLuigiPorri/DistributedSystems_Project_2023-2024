@@ -50,8 +50,8 @@ public class ReliableBroadcastLibrary {
             case CONTENT -> {
                 // print the message
                 ContentMessage contentMessage = (ContentMessage) message;
-                boolean toDrop = (this.node.getUnstableMessageQueue().stream().noneMatch(m -> (m.getSourceId() == contentMessage.getSourceId() && m.getSequenceNumber() >= contentMessage.getSequenceNumber()) || (m.getSourceId() == contentMessage.getSourceId() && contentMessage.getSequenceNumber() - m.getSequenceNumber() > 1))) || this.node.getUnstableMessageQueue().isEmpty() && this.node.getView().stream().anyMatch(p->p.getId()==contentMessage.getSourceId() && contentMessage.getSequenceNumber()-p.getSequenceNumber()>1);
-                if(!toDrop) {
+                boolean toDrop = false; //TODO: Reset this line, this is just for testing (this.node.getUnstableMessageQueue().stream().noneMatch(m -> (m.getSourceId() == contentMessage.getSourceId() && m.getSequenceNumber() >= contentMessage.getSequenceNumber()) || (m.getSourceId() == contentMessage.getSourceId() && contentMessage.getSequenceNumber() - m.getSequenceNumber() > 1))) || this.node.getUnstableMessageQueue().isEmpty() && this.node.getView().stream().anyMatch(p -> p.getId() == contentMessage.getSourceId() && contentMessage.getSequenceNumber() - p.getSequenceNumber() > 1);
+                if (!toDrop) {
                     this.node.queueUnstableMessage(contentMessage);
                     //System.out.println(contentMessage.getPayload());
                     if (this.node.getState().equals(State.NORMAL)) {
@@ -63,10 +63,10 @@ public class ReliableBroadcastLibrary {
             }
             case JOIN -> {// add the new node to the view
                 //TODO: remove this case
-                 }
+            }
 
             case VIEW_CHANGE -> {
-                if(!this.node.getState().equals(State.VIEW_CHANGE)) {
+                if (!this.node.getState().equals(State.VIEW_CHANGE)) {
                     this.node.setState(State.VIEW_CHANGE);
                     // update the view
                     ViewChangeMessage viewChangeMessage = (ViewChangeMessage) message;
@@ -116,8 +116,8 @@ public class ReliableBroadcastLibrary {
         }
     }
 
-    public void sendMessage(ContentMessage message){ //sends a message to the view
-        if(this.node.getState().equals(State.NORMAL)){
+    public void sendMessage(ContentMessage message) { //sends a message to the view
+        if (this.node.getState().equals(State.NORMAL)) {
             this.node.queueOutgoingMessage(message);
             SendingTask sendingThread = new SendingTask(this);
             this.sendingThreads.add(sendingThread);
@@ -137,10 +137,9 @@ public class ReliableBroadcastLibrary {
     public void sendMulticast(Message message) throws IOException {
         // send the ping to all nodes in the view using TCP
         ArrayList<Peer> view;
-        if(this.node.getState().equals(State.NORMAL)) {
+        if (this.node.getState().equals(State.NORMAL)) {
             view = this.node.getView();
-        }
-        else { //view change case
+        } else { //view change case
             view = this.newView;
         }
         for (Peer peer : view) {
@@ -175,8 +174,9 @@ public class ReliableBroadcastLibrary {
     public void addPeer(Socket clientSocket) throws IOException {
         this.node.setState(State.VIEW_CHANGE);
         int nextId = 0;
-        for(Peer peer : this.node.getView()){
-            if(peer.getId() == nextId){
+
+        for (Peer peer : this.node.getView()) {
+            if (peer.getId() == nextId) {
                 nextId++;
             }
             else break;
@@ -193,7 +193,7 @@ public class ReliableBroadcastLibrary {
     public void removePeer(int node) throws IOException {
         this.node.setState(State.VIEW_CHANGE);
         this.newView = this.node.getView();
-        if(node != this.node.getId()) {
+        if (node != this.node.getId()) {
             this.node.getView().stream()
                     .filter(peer -> peer.getId() == node && hasConnection(node))
                     .forEach(peer -> {
@@ -234,14 +234,14 @@ public class ReliableBroadcastLibrary {
         this.deliverThread.interrupt();
         this.connectionManager.interrupt();
         this.receiverThreads.forEach((id, thread) -> thread.interrupt());
-        this.sendingThreads.forEach(t-> {
+        this.sendingThreads.forEach(t -> {
             try {
                 t.join();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         });
-        this.processThreads.forEach(t-> {
+        this.processThreads.forEach(t -> {
             try {
                 t.join();
             } catch (InterruptedException e) {
@@ -254,11 +254,22 @@ public class ReliableBroadcastLibrary {
         Socket socket = new Socket(InetAddress.getByName(address), port);
         //TODO: finish this
     }
+
     public ArrayList<Thread> getSendingThreads() {
         return this.sendingThreads;
     }
 
     public ArrayList<Thread> getProcessThreads() {
         return this.processThreads;
+    }
+
+    // Method used for testing.
+    public void connect(InetAddress address, int port) {
+        try {
+            Socket socket = new Socket(address, port);
+            this.addPeer(socket);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
