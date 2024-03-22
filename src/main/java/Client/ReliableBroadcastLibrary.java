@@ -45,7 +45,7 @@ public class ReliableBroadcastLibrary {
         sockets = new HashMap<>();
     }
 
-    public void processMessage(Message message) throws IOException {
+    public void processMessage(Message message) throws IOException, InterruptedException {
         switch (message.getType()) {
             case CONTENT -> {
                 // print the message
@@ -116,7 +116,7 @@ public class ReliableBroadcastLibrary {
         }
     }
 
-    public void sendMessage(ContentMessage message) { //sends a message to the view
+    public void sendMessage(ContentMessage message) throws InterruptedException { //sends a message to the view
         if (this.node.getState().equals(State.NORMAL)) {
             this.node.queueOutgoingMessage(message);
             SendingTask sendingThread = new SendingTask(this);

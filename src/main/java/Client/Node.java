@@ -37,24 +37,24 @@ public class Node {
         this.view = new ArrayList<>();
     }
 
-    public void queueIncomingMessage(Message message) {
-        this.incomingMessageQueue.add(message);
+    public void queueIncomingMessage(Message message) throws InterruptedException {
+        this.incomingMessageQueue.put(message);
     }
 
     public Message dequeueIncomingMessage() throws InterruptedException {
         return this.incomingMessageQueue.take();
     }
 
-    public void queueUnstableMessage(ContentMessage message) {
-        this.unstableMessageQueue.add(message);
+    public void queueUnstableMessage(ContentMessage message) throws InterruptedException {
+        this.unstableMessageQueue.put(message);
     }
 
     public ContentMessage dequeueUnstableMessage() throws InterruptedException {
         return this.unstableMessageQueue.take();
     }
 
-    public void queueOutgoingMessage(ContentMessage message) {
-        this.outgoingMessageQueue.add(message);
+    public void queueOutgoingMessage(ContentMessage message) throws InterruptedException {
+        this.outgoingMessageQueue.put(message);
     }
 
     public ContentMessage dequeueOutgoingMessage() throws InterruptedException {
@@ -71,7 +71,6 @@ public class Node {
             if (node.getId() == message.getSourceId()) {
                 // TODO: address = node.getAddress().toString();
             }
-
             this.memory.info(message.toCommitString() + "from" + address);
         }
     }
