@@ -31,14 +31,13 @@ public class ReliableBroadcastLibrary {
 
     private int countFlush = 0;
     private ArrayList<Peer> newView;
-    private HashMap<Peer, Socket> sockets;
+    private final HashMap<Peer, Socket> sockets;
 
     public ReliableBroadcastLibrary(int port) throws IOException {
         node = new Node();
         this.connectionManager = new ConnectionManager(this, port);
         connectionManager.start();
         this.deliverThread = new DeliverTask(this);
-        deliverThread.start();
         sendingThreads = new ArrayList<>();
         processThreads = new ArrayList<>();
         receiverThreads = new HashMap<>();
@@ -60,9 +59,6 @@ public class ReliableBroadcastLibrary {
                         processThread.start();
                     }
                 }
-            }
-            case JOIN -> {// add the new node to the view
-                //TODO: remove this case
             }
 
             case VIEW_CHANGE -> {
@@ -125,11 +121,6 @@ public class ReliableBroadcastLibrary {
         }
     }
 
-    public Message parseToMessage(String message) {
-        //TODO: Implement this method
-        return null;
-    }
-
     public Node getNode() {
         return this.node;
     }
@@ -137,10 +128,10 @@ public class ReliableBroadcastLibrary {
     public void sendMulticast(Message message) throws IOException {
         // send the ping to all nodes in the view using TCP
         ArrayList<Peer> view;
-        if (this.node.getState().equals(State.NORMAL)) {
-            view = this.node.getView();
-        } else { //view change case
+        if (this.node.getState().equals(State.VIEW_CHANGE)) {
             view = this.newView;
+        } else { //view change case
+            view = this.node.getView();
         }
         for (Peer peer : view) {
             if (peer.getId() != this.getNode().getId()) {
@@ -154,6 +145,12 @@ public class ReliableBroadcastLibrary {
                 }
             }
         }
+    }
+
+    public void sendUnicast(Message message, Socket peerSocket) throws IOException {
+        ObjectOutputStream out = new ObjectOutputStream(peerSocket.getOutputStream());
+        out.writeObject(message);
+        out.close();
     }
 
 
@@ -187,7 +184,7 @@ public class ReliableBroadcastLibrary {
         Peer peer = new Peer(nextId, clientSocket.getInetAddress(), clientSocket.getPort());
         this.newView.add(peer);
         this.sockets.put(peer, clientSocket);
-        triggerViewChange();
+        sendUnicast(new ViewChangeMessage(this.node.getId(), this.newView), clientSocket);
     }
 
     public void removePeer(int node) throws IOException {
@@ -248,11 +245,28 @@ public class ReliableBroadcastLibrary {
                 throw new RuntimeException(e);
             }
         });
+        this.node.setState(State.DISCONNECTED);
     }
 
-    public void joinView(String address, int port) throws IOException {
-        Socket socket = new Socket(InetAddress.getByName(address), port);
-        //TODO: finish this
+    public void joinView(String address, int port) throws IOException, InterruptedException {
+        this.node.setState(State.JOINING);
+        Socket firstSocket = new Socket(InetAddress.getByName(address), port);
+        Thread firstReceiver = new ReceiverTask(this, firstSocket);
+        firstReceiver.start();
+        ViewChangeMessage message = (ViewChangeMessage) this.node.dequeueIncomingMessage();
+        this.newView = message.getView();
+        Peer first = newView.stream().filter(peer -> peer.getId() == message.getSourceId()).findFirst().get();
+        this.sockets.put(first, firstSocket);
+        this.receiverThreads.put(message.getSourceId(), firstReceiver);
+        //this.node.setId(newView.stream().filter(p-> p.getAddress().equals(TODO:put here the address of this machine).get(0).getId()));
+        for (Peer peer : this.newView.stream().filter(p -> p.getId() != this.node.getId() && p.getId() != message.getSourceId()).toList()) {
+            Socket socket = new Socket(peer.getAddress(), peer.getPort());\
+            this.sockets.put(peer, socket);
+            this.receiverThreads.put(peer.getId(), new ReceiverTask(this, socket));
+            this.receiverThreads.get(peer.getId()).start();
+        }
+        deliverThread.start();
+        triggerViewChange();
     }
 
     public ArrayList<Thread> getSendingThreads() {

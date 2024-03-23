@@ -5,7 +5,7 @@ import Messages.Message;
 
 import java.io.IOException;
 
-public class DeliverTask extends RunningTask{
+public class DeliverTask extends RunningTask {
 
     public DeliverTask(ReliableBroadcastLibrary library) {
         super(library);
@@ -15,11 +15,9 @@ public class DeliverTask extends RunningTask{
     public void run() {
         try {
             while (true) {
-                if (!this.library.getNode().getIncomingMessageQueue().isEmpty()) {
-                    Message processingMessage = this.library.getNode().dequeueIncomingMessage();
-                    if (processingMessage != null) {
-                        this.library.processMessage(processingMessage);
-                    }
+                Message processingMessage = this.library.getNode().dequeueIncomingMessage();
+                if (processingMessage != null) {
+                    this.library.processMessage(processingMessage);
                 }
             }
         } catch (InterruptedException | IOException e) {

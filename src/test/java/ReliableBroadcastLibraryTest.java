@@ -1,4 +1,3 @@
-import Client.Node;
 import Client.ReliableBroadcastLibrary;
 import Client.State;
 import Client.Tuple;
@@ -15,7 +14,7 @@ public class ReliableBroadcastLibraryTest {
     //add unit test for the methods of the ReliableBroadcastLibrary class
     @Test
     public void testReliableBroadcastLibrary() throws IOException {
-        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary(30);
+        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary();
         assertNotNull(rbl);
         assertNotNull(rbl.getNode());
     }
@@ -23,9 +22,9 @@ public class ReliableBroadcastLibraryTest {
 
     @Test
     public void instantiatePeers() throws IOException {
-        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary(30);
-        ReliableBroadcastLibrary rbl2 = new ReliableBroadcastLibrary(31);
-        ReliableBroadcastLibrary rbl3 = new ReliableBroadcastLibrary(32);
+        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary();
+        ReliableBroadcastLibrary rbl2 = new ReliableBroadcastLibrary();
+        ReliableBroadcastLibrary rbl3 = new ReliableBroadcastLibrary();
         rbl2.connect(InetAddress.getLocalHost(), 30);
         rbl3.connect(InetAddress.getLocalHost(), 30);
         rbl2.connect(InetAddress.getLocalHost(), 32);
@@ -51,8 +50,8 @@ public class ReliableBroadcastLibraryTest {
 
     @Test
     public void testReliableBroadcastLibraryProcessingMessagesIncomingMessage() throws IOException, InterruptedException {
-        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary(30);
-        ReliableBroadcastLibrary rbl2 = new ReliableBroadcastLibrary(31);
+        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary();
+        ReliableBroadcastLibrary rbl2 = new ReliableBroadcastLibrary();
         rbl2.connect(InetAddress.getLocalHost(), 30);
         rbl.getNode().setState(State.NORMAL);
         rbl.getNode().incrementAcks(new Tuple(1, 1));
@@ -70,9 +69,9 @@ public class ReliableBroadcastLibraryTest {
     @Test
     public void sendMulticast() throws IOException, InterruptedException {
 
-        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary(30);
-        ReliableBroadcastLibrary rbl2 = new ReliableBroadcastLibrary(31);
-        ReliableBroadcastLibrary rbl3 = new ReliableBroadcastLibrary(32);
+        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary();
+        ReliableBroadcastLibrary rbl2 = new ReliableBroadcastLibrary();
+        ReliableBroadcastLibrary rbl3 = new ReliableBroadcastLibrary();
         rbl2.connect(InetAddress.getLocalHost(), 30);
         rbl3.connect(InetAddress.getLocalHost(), 30);
         rbl2.connect(InetAddress.getLocalHost(), 32);

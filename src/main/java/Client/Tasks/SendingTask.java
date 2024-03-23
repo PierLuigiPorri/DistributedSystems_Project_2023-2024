@@ -16,7 +16,6 @@ public class SendingTask extends RunningTask{
     public void run() {
         while (this.library.getNode().getState().equals(Client.State.NORMAL)) {
             try {
-                //TODO: lock the queue
                 ContentMessage message = this.library.getNode().peekOutgoingMessage();
                 this.library.getNode().queueUnstableMessage(message);
                 message.setSequenceNumber(this.library.getNode().getSequenceNumber());

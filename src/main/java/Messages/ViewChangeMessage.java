@@ -3,7 +3,6 @@ package Messages;
 import Client.Peer;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class ViewChangeMessage extends Message {
     private final ArrayList<Peer> view;

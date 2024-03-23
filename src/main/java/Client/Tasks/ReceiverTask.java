@@ -30,6 +30,8 @@ public class ReceiverTask extends Thread {
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 }

@@ -1,7 +1,7 @@
 package Messages;
 
 public abstract class Message implements java.io.Serializable {
-    protected int sourceId;
+    protected final int sourceId;
 
     public Message(int sourceId) {
         this.sourceId = sourceId;

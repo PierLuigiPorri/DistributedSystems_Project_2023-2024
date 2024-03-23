@@ -2,7 +2,6 @@ package Client;
 
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.net.Socket;
 
 public class Peer implements Serializable {
     private final int id;
@@ -29,11 +28,6 @@ public class Peer implements Serializable {
     public int getSequenceNumber() {
         return sequenceNumber;
     }
-
-    public void setSequenceNumber(int sequenceNumber) {
-        this.sequenceNumber = sequenceNumber;
-    }
-
     public void incrementSequenceNumber() {
         this.sequenceNumber++;
     }

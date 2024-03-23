@@ -14,7 +14,7 @@ import java.util.logging.SimpleFormatter;
 public class Node {
     private ArrayList<Peer> view;
     private HashMap<Integer, Integer> viewTimers;
-    private int id;      //TODO: set this when receiving a new view after a join
+    private int id;         //TODO: set this after view change
     private State state;
     private final Logger memory;
     private int sequenceNumber = 0;
@@ -69,7 +69,7 @@ public class Node {
         String address = "";
         for (Peer node : view) {
             if (node.getId() == message.getSourceId()) {
-                // TODO: address = node.getAddress().toString();
+                address = node.getAddress().toString();
             }
             this.memory.info(message.toCommitString() + "from" + address);
         }
@@ -112,6 +112,10 @@ public class Node {
 
     public int getId() {
         return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public State getState() {
