@@ -14,7 +14,7 @@ import java.util.logging.SimpleFormatter;
 public class Node {
     private ArrayList<Peer> view;
     private HashMap<Integer, Integer> viewTimers;
-    private int id;         //TODO: set this after view change
+    private int id;
     private State state;
     private final Logger memory;
     private int sequenceNumber = 0;
@@ -96,12 +96,17 @@ public class Node {
 
 
     public int checkIfSomeoneIsDead() {
+        int deadNode = -1;
         for (Peer node : view) {
             if (viewTimers.get(node.getId()) > 2) {
-                return node.getId();
+                if (deadNode == -1) {
+                    deadNode = node.getId();
+                } else {
+                    return -2;
+                }
             }
         }
-        return -1;
+        return deadNode;
     }
 
     // Getters and setters
@@ -144,10 +149,6 @@ public class Node {
 
     public void dropAcks(Tuple message) {
         this.acks.put(message, -1);
-    }
-
-    public LinkedBlockingQueue<Message> getIncomingMessageQueue() {
-        return this.incomingMessageQueue;
     }
 
     public void incrementSequenceNumber() {

@@ -11,13 +11,16 @@ import Client.Tasks.*;
 import Messages.*;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import static java.lang.Thread.sleep;
 
 public class ReliableBroadcastLibrary {
 
@@ -27,7 +30,6 @@ public class ReliableBroadcastLibrary {
     private final HashMap<Integer, Thread> receiverThreads;
     private final Thread deliverThread;
     private final ConnectionManager connectionManager;
-
 
     private int countFlush = 0;
     private ArrayList<Peer> newView;
@@ -67,6 +69,10 @@ public class ReliableBroadcastLibrary {
                     // update the view
                     ViewChangeMessage viewChangeMessage = (ViewChangeMessage) message;
                     newView = viewChangeMessage.getView();
+                    int toRemove = viewChangeMessage.getToRemove();
+                    if (toRemove != -1) {
+                        closeConnection(toRemove);
+                    }
                     for (ContentMessage messages : this.node.getUnstableMessageQueue()) {
                         sendMulticast(messages);
                     }
@@ -112,6 +118,20 @@ public class ReliableBroadcastLibrary {
         }
     }
 
+    public void closeConnection(int toRemove) {
+        this.node.getView().stream()
+                .filter(peer -> peer.getId() == toRemove)
+                .forEach(peer -> {
+                    try {
+                        sockets.get(peer).close();
+                    } catch (IOException e) {
+                        System.out.println("Error: failed to close connection with peer " + peer.getId() + ". " + e.getMessage());
+                    }
+                    sockets.remove(peer);
+                });
+        this.receiverThreads.get(toRemove).interrupt();
+    }
+
     public void sendMessage(ContentMessage message) throws InterruptedException { //sends a message to the view
         if (this.node.getState().equals(State.NORMAL)) {
             this.node.queueOutgoingMessage(message);
@@ -136,13 +156,9 @@ public class ReliableBroadcastLibrary {
         for (Peer peer : view) {
             if (peer.getId() != this.getNode().getId()) {
                 Socket socket = this.getSocketFromId(peer.getId());
-                if (this.hasConnection(peer.getId())) { // Ensure a valid connection exists
-                    ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                    out.writeObject(message);
-                    out.close();
-                } else {
-                    System.err.println("No connection found for peer ID: " + peer.getId());
-                }
+                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+                out.writeObject(message);
+                out.close();
             }
         }
     }
@@ -159,57 +175,55 @@ public class ReliableBroadcastLibrary {
         return sockets.get(this.node.getView().stream().filter(peer -> peer.getId() == peerId).findFirst().get());
     }
 
-    // Method to check if a connection exists with a peer
-    public boolean hasConnection(int peerId) {
-        return getSocketFromId(peerId) != null;
-    }
-
     public int getViewSize() {
         return this.getNode().getView().size();
     }
 
-    public void addPeer(Socket clientSocket) throws IOException {
-        this.node.setState(State.VIEW_CHANGE);
-        int nextId = 0;
-
-        for (Peer peer : this.node.getView()) {
-            if (peer.getId() == nextId) {
-                nextId++;
+    public void addPeer(Socket clientSocket) throws IOException, ClassNotFoundException, InterruptedException {
+        this.node.setState(State.JOINING);
+        ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+        Message message = (Message) in.readObject();
+        in.close();
+        if (message.getType().equals(MessageEnum.JOIN)) {
+            int nextId = 0;
+            for (Peer peer : this.node.getView()) {
+                if (peer.getId() == nextId) {
+                    nextId++;
+                } else break;
             }
-            else break;
+            this.newView = this.node.getView();
+            this.receiverThreads.put(nextId, new ReceiverTask(this, clientSocket));
+            this.receiverThreads.get(nextId).start();
+            Peer peer = new Peer(nextId, clientSocket.getInetAddress(), clientSocket.getPort());
+            this.newView.add(peer);
+            this.sockets.put(peer, clientSocket);
+            sendUnicast(new ViewChangeMessage(this.node.getId(), this.newView, -1), clientSocket);
+        } else {
+            ViewChangeMessage viewChangeMessage = (ViewChangeMessage) message;
+            Peer newPeer = viewChangeMessage.getView().stream().filter(peer -> peer.getId() == viewChangeMessage.getSourceId()).findFirst().get();
+            this.receiverThreads.put(newPeer.getId(), new ReceiverTask(this, clientSocket));
+            this.receiverThreads.get(newPeer.getId()).start();
+            this.sockets.put(newPeer, clientSocket);
+            processMessage(viewChangeMessage);
         }
-        this.newView = this.node.getView();
-        this.receiverThreads.put(nextId, new ReceiverTask(this, clientSocket));
-        this.receiverThreads.get(nextId).start();
-        Peer peer = new Peer(nextId, clientSocket.getInetAddress(), clientSocket.getPort());
-        this.newView.add(peer);
-        this.sockets.put(peer, clientSocket);
-        sendUnicast(new ViewChangeMessage(this.node.getId(), this.newView), clientSocket);
     }
 
     public void removePeer(int node) throws IOException {
-        this.node.setState(State.VIEW_CHANGE);
+        if (this.node.getState() != State.LEAVING){
+            this.node.setState(State.VIEW_CHANGE);
+        }
         this.newView = this.node.getView();
         if (node != this.node.getId()) {
-            this.node.getView().stream()
-                    .filter(peer -> peer.getId() == node && hasConnection(node))
-                    .forEach(peer -> {
-                        try {
-                            sockets.get(peer).close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        sockets.remove(peer);
-                    });
+            closeConnection(node);
         }
         this.newView.removeIf(peer -> peer.getId() == node);
-        this.receiverThreads.get(node).interrupt();
-        triggerViewChange();
+        triggerViewChange(node);
     }
 
-    public void triggerViewChange() throws IOException {
+    public void triggerViewChange(int toRemove) throws IOException {
+        this.node.setState(State.VIEW_CHANGE);
         this.newView.sort(Comparator.comparing(Peer::getId));
-        sendMulticast(new ViewChangeMessage(this.node.getId(), this.newView));
+        sendMulticast(new ViewChangeMessage(this.node.getId(), this.newView, toRemove));
         for (ContentMessage messages : this.node.getUnstableMessageQueue()) {
             sendMulticast(messages);
         }
@@ -219,18 +233,88 @@ public class ReliableBroadcastLibrary {
     public void leaveView() throws IOException {
         this.node.setState(State.LEAVING);
         removePeer(this.node.getId());
+        handleDisconnection();
+    }
+
+    public void joinView(String address, int port){
+        try {
+            Socket firstSocket = new Socket(InetAddress.getByName(address), port);
+            sleep(1000);
+            sendUnicast(new JoinMessage(-1), firstSocket);
+            Thread firstReceiver = new ReceiverTask(this, firstSocket);
+            firstReceiver.start();
+            ViewChangeMessage message = (ViewChangeMessage) this.node.dequeueIncomingMessage();
+            this.newView = message.getView();
+            Peer first = newView.stream().filter(peer -> peer.getId() == message.getSourceId()).findFirst().get();
+            this.sockets.put(first, firstSocket);
+            this.receiverThreads.put(message.getSourceId(), firstReceiver);
+            int ownId = newView.stream().filter(peer -> {
+                try {
+                    return peer.getAddress().equals(InetAddress.getLocalHost());            //note: very weird method, might return wrong host address. Didn't find a better candidate.
+                } catch (UnknownHostException e) {
+                    throw new RuntimeException(e);
+                }
+            }).findFirst().get().getId();
+            this.node.setId(ownId);
+            for (Peer peer : this.newView.stream().filter(p -> p.getId() != this.node.getId() && p.getId() != message.getSourceId()).toList()) {
+                Socket socket = new Socket(peer.getAddress(), peer.getPort());
+                this.sockets.put(peer, socket);
+                this.receiverThreads.put(peer.getId(), new ReceiverTask(this, socket));
+                this.receiverThreads.get(peer.getId()).start();
+            }
+            deliverThread.start();
+            sleep(1000);
+            triggerViewChange(-1);
+        } catch (Exception e) {
+            System.err.println("Error: failed to join the view. " + e.getMessage());
+        }
+    }
+
+    public ArrayList<Thread> getSendingThreads() {
+        return this.sendingThreads;
+    }
+
+    public ArrayList<Thread> getProcessThreads() {
+        return this.processThreads;
+    }
+
+    // Method used for testing.
+    public void connect(InetAddress address, int port) {
+        try {
+            Socket socket = new Socket(address, port);
+            this.addPeer(socket);
+        } catch (IOException e) {
+            System.out.println("Error: failed to connect to peer at address " + address + " and port " + port + ". " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void createMulticastGroup() throws UnknownHostException {
+        this.node.getView().add(new Peer(0, InetAddress.getLocalHost(), this.connectionManager.getPort()));
+        this.node.setId(0);
+        deliverThread.start();
+    }
+
+    public void handleDisconnection(){
         for (Peer peer : this.node.getView()) {
             if (peer.getId() != this.node.getId()) {
                 try {
                     sockets.get(peer).close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    System.out.println("Error: failed to close connection with peer " + peer.getId() + ". " + e.getMessage());
                 }
             }
         }
         this.deliverThread.interrupt();
         this.connectionManager.interrupt();
-        this.receiverThreads.forEach((id, thread) -> thread.interrupt());
+        this.receiverThreads.forEach((id, thread) -> {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
         this.sendingThreads.forEach(t -> {
             try {
                 t.join();
@@ -248,42 +332,17 @@ public class ReliableBroadcastLibrary {
         this.node.setState(State.DISCONNECTED);
     }
 
-    public void joinView(String address, int port) throws IOException, InterruptedException {
+    public void reconnect(){
+        handleDisconnection();
         this.node.setState(State.JOINING);
-        Socket firstSocket = new Socket(InetAddress.getByName(address), port);
-        Thread firstReceiver = new ReceiverTask(this, firstSocket);
-        firstReceiver.start();
-        ViewChangeMessage message = (ViewChangeMessage) this.node.dequeueIncomingMessage();
-        this.newView = message.getView();
-        Peer first = newView.stream().filter(peer -> peer.getId() == message.getSourceId()).findFirst().get();
-        this.sockets.put(first, firstSocket);
-        this.receiverThreads.put(message.getSourceId(), firstReceiver);
-        //this.node.setId(newView.stream().filter(p-> p.getAddress().equals(TODO:put here the address of this machine).get(0).getId()));
-        for (Peer peer : this.newView.stream().filter(p -> p.getId() != this.node.getId() && p.getId() != message.getSourceId()).toList()) {
-            Socket socket = new Socket(peer.getAddress(), peer.getPort());\
-            this.sockets.put(peer, socket);
-            this.receiverThreads.put(peer.getId(), new ReceiverTask(this, socket));
-            this.receiverThreads.get(peer.getId()).start();
-        }
-        deliverThread.start();
-        triggerViewChange();
-    }
-
-    public ArrayList<Thread> getSendingThreads() {
-        return this.sendingThreads;
-    }
-
-    public ArrayList<Thread> getProcessThreads() {
-        return this.processThreads;
-    }
-
-    // Method used for testing.
-    public void connect(InetAddress address, int port) {
-        try {
-            Socket socket = new Socket(address, port);
-            this.addPeer(socket);
-        } catch (IOException e) {
-            e.printStackTrace();
+        //try to connect to the first peer in the view, if it fails, try the next one
+        for (Peer peer : this.node.getView()) {
+            try {
+                joinView(peer.getAddress().getHostAddress(), peer.getPort());
+                break;
+            } catch (Exception e) {
+                System.out.println("Failed to connect to peer " + peer.getId() + " at address " + peer.getAddress().getHostAddress() + " and port " + peer.getPort() + ". Trying next peer.");
+            }
         }
     }
 }

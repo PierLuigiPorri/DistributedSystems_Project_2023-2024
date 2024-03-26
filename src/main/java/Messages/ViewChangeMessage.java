@@ -6,10 +6,12 @@ import java.util.ArrayList;
 
 public class ViewChangeMessage extends Message {
     private final ArrayList<Peer> view;
+    private final int toRemove;
 
-    public ViewChangeMessage(int sourceId, ArrayList<Peer> view) {
+    public ViewChangeMessage(int sourceId, ArrayList<Peer> view, int toRemove) {
         super(sourceId);
         this.view = view;
+        this.toRemove = toRemove;
     }
 
 
@@ -24,4 +26,8 @@ public class ViewChangeMessage extends Message {
 
     @Override
     public int getSourceId() { return sourceId; }
+
+    public int getToRemove() {
+        return toRemove;
+    }
 }

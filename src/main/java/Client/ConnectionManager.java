@@ -19,16 +19,21 @@ public class ConnectionManager extends Thread {
         try {
             // Create a ServerSocket to listen for incoming connections
             try (ServerSocket serverSocket = new ServerSocket(port)) {
-
                 // Listen for incoming connections
                 while (true) {
                     // Accept incoming connection requests
                     Socket clientSocket = serverSocket.accept();
                     this.library.addPeer(clientSocket);
                 }
+            } catch (ClassNotFoundException | InterruptedException e) {
+                throw new RuntimeException(e);
             }
         } catch (IOException e) {
             System.out.println("Error: connection failed. " + e.getMessage());
         }
+    }
+
+    public int getPort() {
+        return port;
     }
 }
