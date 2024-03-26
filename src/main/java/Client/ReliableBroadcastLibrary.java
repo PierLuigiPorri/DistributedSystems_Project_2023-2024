@@ -278,7 +278,7 @@ public class ReliableBroadcastLibrary {
         return this.processThreads;
     }
 
-    // Method used for testing.
+    // TODO: delete this
     public void connect(InetAddress address, int port) {
         try {
             Socket socket = new Socket(address, port);
