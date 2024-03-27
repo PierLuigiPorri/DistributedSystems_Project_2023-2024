@@ -1,19 +1,33 @@
 package Client.Tasks;
+/*
+    * This class is responsible for managing the timers of the node.
+    * It checks if a node is dead and if it is, it removes it from the list of peers.
+ */
+import Client.VirtualSynchronyLibrary;
 
-import Client.ReliableBroadcastLibrary;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class TimerTask extends RunningTask{
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-    public TimerTask(ReliableBroadcastLibrary library) {
+    /*
+        * Constructor for the TimerTask class.
+        * @param library: the library that is used to communicate with the other nodes.
+     */
+    public TimerTask(VirtualSynchronyLibrary library) {
         super(library);
     }
 
-
+    /*
+        * This method is responsible for running the TimerTask.
+        * It checks if a node is dead and if it is, it removes it from the list of peers.
+     */
     public void run() {
         this.library.getNode().initializeTimer();
-        while (true) {
+        final Runnable timerTask = () -> {
             try {
-                sleep(300);
                 this.library.getNode().incrementTimers();
                 int deadNode = this.library.getNode().checkIfSomeoneIsDead();
                 if (deadNode != -1) {
@@ -25,11 +39,11 @@ public class TimerTask extends RunningTask{
                     else {
                         this.library.reconnect();
                     }
-                    break;
                 }
             } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
+                System.out.println("Error in TimerTask: " + e.getMessage());
             }
-        }
+        };
+        scheduler.scheduleAtFixedRate(timerTask, 0, 300, TimeUnit.MILLISECONDS);
     }
 }

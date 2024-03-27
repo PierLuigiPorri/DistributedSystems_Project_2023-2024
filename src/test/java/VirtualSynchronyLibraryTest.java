@@ -1,4 +1,4 @@
-import Client.ReliableBroadcastLibrary;
+import Client.VirtualSynchronyLibrary;
 import Client.State;
 import Client.Tuple;
 import Messages.ContentMessage;
@@ -9,12 +9,12 @@ import java.net.InetAddress;
 
 import static org.junit.Assert.*;
 
-public class ReliableBroadcastLibraryTest {
+public class VirtualSynchronyLibraryTest {
 
     //add unit test for the methods of the ReliableBroadcastLibrary class
     @Test
     public void testReliableBroadcastLibrary() throws IOException {
-        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary();
+        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary();
         assertNotNull(rbl);
         assertNotNull(rbl.getNode());
     }
@@ -22,9 +22,9 @@ public class ReliableBroadcastLibraryTest {
 
     @Test
     public void instantiatePeers() throws IOException {
-        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary();
-        ReliableBroadcastLibrary rbl2 = new ReliableBroadcastLibrary();
-        ReliableBroadcastLibrary rbl3 = new ReliableBroadcastLibrary();
+        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary();
+        VirtualSynchronyLibrary rbl2 = new VirtualSynchronyLibrary();
+        VirtualSynchronyLibrary rbl3 = new VirtualSynchronyLibrary();
         rbl2.connect(InetAddress.getLocalHost(), 30);
         rbl3.connect(InetAddress.getLocalHost(), 30);
         rbl2.connect(InetAddress.getLocalHost(), 32);
@@ -49,9 +49,9 @@ public class ReliableBroadcastLibraryTest {
     }
 
     @Test
-    public void testReliableBroadcastLibraryProcessingMessagesIncomingMessage() throws IOException, InterruptedException {
-        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary();
-        ReliableBroadcastLibrary rbl2 = new ReliableBroadcastLibrary();
+    public void testReliableBroadcastLibraryProcessingMessagesIncomingMessage() throws Exception {
+        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary();
+        VirtualSynchronyLibrary rbl2 = new VirtualSynchronyLibrary();
         rbl2.connect(InetAddress.getLocalHost(), 30);
         rbl.getNode().setState(State.NORMAL);
         rbl.getNode().incrementAcks(new Tuple(1, 1));
@@ -69,9 +69,9 @@ public class ReliableBroadcastLibraryTest {
     @Test
     public void sendMulticast() throws IOException, InterruptedException {
 
-        ReliableBroadcastLibrary rbl = new ReliableBroadcastLibrary();
-        ReliableBroadcastLibrary rbl2 = new ReliableBroadcastLibrary();
-        ReliableBroadcastLibrary rbl3 = new ReliableBroadcastLibrary();
+        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary();
+        VirtualSynchronyLibrary rbl2 = new VirtualSynchronyLibrary();
+        VirtualSynchronyLibrary rbl3 = new VirtualSynchronyLibrary();
         rbl2.connect(InetAddress.getLocalHost(), 30);
         rbl3.connect(InetAddress.getLocalHost(), 30);
         rbl2.connect(InetAddress.getLocalHost(), 32);

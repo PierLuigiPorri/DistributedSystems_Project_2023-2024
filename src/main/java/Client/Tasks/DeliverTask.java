@@ -1,16 +1,27 @@
 package Client.Tasks;
-
-import Client.ReliableBroadcastLibrary;
+/*
+    * This class is responsible for delivering messages to the application layer.
+    * It is a subclass of RunningTask, therefore a runnable class.
+ */
+import Client.VirtualSynchronyLibrary;
 import Messages.Message;
 
 import java.io.IOException;
 
 public class DeliverTask extends RunningTask {
 
-    public DeliverTask(ReliableBroadcastLibrary library) {
+    /*
+        * Constructor for the DeliverTask class.
+        * @param library: The library that the task is associated with.
+     */
+    public DeliverTask(VirtualSynchronyLibrary library) {
         super(library);
     }
 
+    /*
+        * This method is responsible for delivering messages to the application layer.
+        * It runs in an infinite loop, and processes messages as they arrive.
+     */
     @SuppressWarnings("InfiniteLoopStatement")
     public void run() {
         try {
@@ -21,7 +32,7 @@ public class DeliverTask extends RunningTask {
                 }
             }
         } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
+            System.out.println("Error while delivering a message.");
         }
     }
 }
