@@ -220,30 +220,35 @@ public class VirtualSynchronyLibrary {
      */
     public void addPeer(Socket clientSocket) throws IOException, ClassNotFoundException, InterruptedException {
         this.node.setState(State.JOINING);
-        ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-        Message message = (Message) in.readObject();                                                        //first message from the new peer
-        in.close();
-        if (message.getType().equals(MessageEnum.JOIN)) {                                                   //if the message is a join message, add the peer to the view
-            int nextId = 0;
-            for (Peer peer : this.node.getView()) {
-                if (peer.getId() == nextId) {
-                    nextId++;
-                } else break;
+        try {
+            ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+
+            Message message = (Message) in.readObject();                                                        //first message from the new peer
+            in.close();
+            if (message.getType().equals(MessageEnum.JOIN)) {                                                   //if the message is a join message, add the peer to the view
+                int nextId = 0;
+                for (Peer peer : this.node.getView()) {
+                    if (peer.getId() == nextId) {
+                        nextId++;
+                    } else break;
+                }
+                this.newView = this.node.getView();
+                this.receiverThreads.put(nextId, new ReceiverTask(this, clientSocket));
+                this.receiverThreads.get(nextId).start();
+                Peer peer = new Peer(nextId, clientSocket.getInetAddress(), clientSocket.getPort());
+                this.newView.add(peer);
+                this.sockets.put(peer, clientSocket);
+                sendUnicast(new ViewChangeMessage(this.node.getId(), this.newView, -1), clientSocket);  //send the view to the new peer to let it connect to the others
+            } else {                                                                                              //if the message is not a join message, it's a view change message, so add new peer and then process it
+                ViewChangeMessage viewChangeMessage = (ViewChangeMessage) message;
+                Peer newPeer = viewChangeMessage.getView().stream().filter(peer -> peer.getId() == viewChangeMessage.getSourceId()).findFirst().orElseThrow(() -> new IOException("Error: failed to find peer in the view."));
+                this.receiverThreads.put(newPeer.getId(), new ReceiverTask(this, clientSocket));
+                this.receiverThreads.get(newPeer.getId()).start();
+                this.sockets.put(newPeer, clientSocket);
+                processMessage(viewChangeMessage);
             }
-            this.newView = this.node.getView();
-            this.receiverThreads.put(nextId, new ReceiverTask(this, clientSocket));
-            this.receiverThreads.get(nextId).start();
-            Peer peer = new Peer(nextId, clientSocket.getInetAddress(), clientSocket.getPort());
-            this.newView.add(peer);
-            this.sockets.put(peer, clientSocket);
-            sendUnicast(new ViewChangeMessage(this.node.getId(), this.newView, -1), clientSocket);  //send the view to the new peer to let it connect to the others
-        } else {                                                                                              //if the message is not a join message, it's a view change message, so add new peer and then process it
-            ViewChangeMessage viewChangeMessage = (ViewChangeMessage) message;
-            Peer newPeer = viewChangeMessage.getView().stream().filter(peer -> peer.getId() == viewChangeMessage.getSourceId()).findFirst().orElseThrow(() -> new IOException("Error: failed to find peer in the view."));
-            this.receiverThreads.put(newPeer.getId(), new ReceiverTask(this, clientSocket));
-            this.receiverThreads.get(newPeer.getId()).start();
-            this.sockets.put(newPeer, clientSocket);
-            processMessage(viewChangeMessage);
+        } catch (Exception e) {
+            System.out.println("Error: failed to add peer to the view. " + e.getMessage());
         }
     }
 
@@ -301,6 +306,7 @@ public class VirtualSynchronyLibrary {
             sendUnicast(new JoinMessage(-1), firstSocket);
             Thread firstReceiver = new ReceiverTask(this, firstSocket);
             firstReceiver.start();
+            sleep(10000);
             ViewChangeMessage message = (ViewChangeMessage) this.node.dequeueIncomingMessage();
             this.newView = message.getView();
             Peer first = newView.stream().filter(peer -> peer.getId() == message.getSourceId()).findFirst().orElseThrow(() -> new Exception("Error: failed to find the first peer in the view."));

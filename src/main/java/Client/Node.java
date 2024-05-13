@@ -106,6 +106,7 @@ public class Node {
             if (node.getId() == message.getSourceId()) {
                 address = node.getAddress().toString();
             }
+
             this.memory.info(message.toCommitString() + "from" + address);
         }
     }
@@ -212,6 +213,10 @@ public class Node {
      */
     public int getAcks(Tuple message) {
         return this.acks.get(message);
+    }
+
+    public void initializeAcks(Tuple message) {
+        this.acks.put(message, 0);
     }
 
     /*

@@ -35,6 +35,7 @@ public class SendingTask extends RunningTask {
             try {
                 ContentMessage message = this.library.getNode().peekOutgoingMessage();
                 this.library.getNode().queueUnstableMessage(message);
+                this.library.getNode().initializeAcks(new Tuple(this.library.getNode().getSequenceNumber(), this.library.getNode().getId()));
                 message.setSequenceNumber(this.library.getNode().getSequenceNumber());
                 this.library.sendMulticast(message);
                 AtomicInteger pseudoTimer = new AtomicInteger();
