@@ -365,8 +365,8 @@ public class VirtualSynchronyLibrary {
     * Method to create a multicast group. API call used by the first peer to create the group.
     * @throws UnknownHostException
      */
-    public void createMulticastGroup() throws UnknownHostException {
-        this.node.getView().add(new Peer(0, InetAddress.getLocalHost(), this.connectionManager.getPort()));
+    public void createMulticastGroup() {
+        this.node.getView().add(new Peer(0, getLocalAddress(), this.connectionManager.getPort()));
         this.node.setId(0);
         deliverThread.start();
     }
