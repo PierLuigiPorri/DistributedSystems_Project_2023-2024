@@ -12,9 +12,7 @@ import Messages.*;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -308,13 +306,7 @@ public class VirtualSynchronyLibrary {
             Peer first = newView.stream().filter(peer -> peer.getId() == message.getSourceId()).findFirst().orElseThrow(() -> new Exception("Error: failed to find the first peer in the view."));
             this.sockets.put(first, firstSocket);
             this.receiverThreads.put(message.getSourceId(), firstReceiver);
-            int ownId = newView.stream().filter(peer -> {
-                try {
-                    return peer.getAddress().equals(InetAddress.getLocalHost());            //note: very weird method, might return wrong host address. Didn't find a better candidate. TODO: find a better method
-                } catch (UnknownHostException e) {
-                    throw new RuntimeException(e);
-                }
-            }).findFirst().orElseThrow(() -> new Exception("Error: failed to find peer in the view.")).getId();
+            int ownId = newView.stream().filter(peer -> peer.getAddress().equals(getLocalAddress())).findFirst().orElseThrow(() -> new Exception("Error: failed to find peer in the view.")).getId();
             this.node.setId(ownId);
             for (Peer peer : this.newView.stream().filter(p -> p.getId() != this.node.getId() && p.getId() != message.getSourceId()).toList()) {
                 Socket socket = new Socket(peer.getAddress(), peer.getPort());
@@ -328,6 +320,17 @@ public class VirtualSynchronyLibrary {
         } catch (Exception e) {
             System.err.println("Error: failed to join the view. " + e.getMessage());
         }
+    }
+
+    public InetAddress getLocalAddress(){
+        InetAddress ip = null;
+        try(final DatagramSocket socket = new DatagramSocket()){
+            socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+            ip = InetAddress.getByName(socket.getLocalAddress().getHostAddress());
+        } catch (SocketException | UnknownHostException e) {
+            System.out.println("Failed to retrieve local IP address!");
+        }
+        return ip;
     }
 
     /*
