@@ -21,6 +21,7 @@ import static java.lang.Thread.sleep;
 public class VirtualSynchronyLibrary {
 
     private final Node node;                                    // node of the local machine
+    private final InetAddress address;                          // address of the local machine
     private final ArrayList<Thread> sendingThreads;             // list of threads for sending messages
     private final ArrayList<Thread> processThreads;             // list of threads for processing messages
     private final HashMap<Integer, Thread> receiverThreads;     // list of threads for receiving messages
@@ -36,8 +37,9 @@ public class VirtualSynchronyLibrary {
     * @param port The port number to listen for incoming connections.
     * @throws IOException
      */
-    public VirtualSynchronyLibrary(int port) throws IOException {
+    public VirtualSynchronyLibrary(String address, int port) throws IOException {
         node = new Node();
+        this.address = InetAddress.getByName(address);
         this.connectionManager = new ConnectionManager(this, port);
         connectionManager.start();
         this.deliverThread = new DeliverTask(this);
@@ -312,7 +314,14 @@ public class VirtualSynchronyLibrary {
             Peer first = newView.stream().filter(peer -> peer.getId() == message.getSourceId()).findFirst().orElseThrow(() -> new Exception("Error: failed to find the first peer in the view."));
             this.sockets.put(first, firstSocket);
             this.receiverThreads.put(message.getSourceId(), firstReceiver);
-            int ownId = newView.stream().filter(peer -> peer.getAddress().equals(getLocalAddress())).findFirst().orElseThrow(() -> new Exception("Error: failed to find peer in the view.")).getId();
+            int ownId = newView.stream().filter(peer -> {
+                try {
+                    return peer.getAddress().equals(InetAddress.getByName(address));
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
+                return false;
+            }).findFirst().orElseThrow(() -> new Exception("Error: failed to find peer in the view.")).getId();
             this.node.setId(ownId);
             for (Peer peer : this.newView.stream().filter(p -> p.getId() != this.node.getId() && p.getId() != message.getSourceId()).toList()) {
                 Socket socket = new Socket(peer.getAddress(), peer.getPort());
@@ -328,7 +337,7 @@ public class VirtualSynchronyLibrary {
         }
     }
 
-    public InetAddress getLocalAddress(){
+    /*public InetAddress getLocalAddress(){
         InetAddress ip = null;
         try(final DatagramSocket socket = new DatagramSocket()){
             socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
@@ -337,7 +346,7 @@ public class VirtualSynchronyLibrary {
             System.out.println("Failed to retrieve local IP address!");
         }
         return ip;
-    }
+    }*/
 
     /*
     * Method to get the list of sending threads.
@@ -372,7 +381,7 @@ public class VirtualSynchronyLibrary {
     * @throws UnknownHostException
      */
     public void createMulticastGroup() {
-        this.node.getView().add(new Peer(0, getLocalAddress(), this.connectionManager.getPort()));
+        this.node.getView().add(new Peer(0, address, this.connectionManager.getPort()));
         this.node.setId(0);
         deliverThread.start();
     }
