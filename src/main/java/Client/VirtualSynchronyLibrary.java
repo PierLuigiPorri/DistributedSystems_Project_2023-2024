@@ -37,7 +37,7 @@ public class VirtualSynchronyLibrary {
     * @param port The port number to listen for incoming connections.
     * @throws IOException
      */
-    public VirtualSynchronyLibrary(String address, int port) throws IOException {
+    public  VirtualSynchronyLibrary(String address, int port) throws IOException {
         node = new Node();
         this.address = InetAddress.getByName(address);
         this.connectionManager = new ConnectionManager(this, port);
@@ -176,10 +176,8 @@ public class VirtualSynchronyLibrary {
         }
         for (Peer peer : view) {
             if (peer.getId() != this.getNode().getId()) {
-                Socket socket = this.getSocketFromId(peer.getId());
-                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                out.writeObject(message);
-                out.close();
+                ReceiverTask rcv = (ReceiverTask) receiverThreads.get(peer.getId());
+                rcv.sendUnicast(message);
             }
         }
     }
@@ -193,7 +191,6 @@ public class VirtualSynchronyLibrary {
     public void sendUnicast(Message message, Socket peerSocket) throws IOException {
         ObjectOutputStream out = new ObjectOutputStream(peerSocket.getOutputStream());
         out.writeObject(message);
-        out.close();
     }
 
     /*
@@ -225,9 +222,13 @@ public class VirtualSynchronyLibrary {
         try {
             ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
 
-            Message message = (Message) in.readObject();                                                        //first message from the new peer
-            in.close();
-            if (message.getType().equals(MessageEnum.JOIN)) {                                                   //if the message is a join message, add the peer to the view
+            Message message = (Message) in.readObject();
+            //first message from the new peer
+
+            //in.close();
+
+            if (message.getType().equals(MessageEnum.JOIN)) {
+                //if the message is a join message, add the peer to the view
                 int nextId = 0;
                 for (Peer peer : this.node.getView()) {
                     if (peer.getId() == nextId) {
@@ -304,12 +305,13 @@ public class VirtualSynchronyLibrary {
     public void joinView(String address, int port){
         try {
             Socket firstSocket = new Socket(InetAddress.getByName(address), port);
-            sleep(1000);
+            sleep(5000);
             sendUnicast(new JoinMessage(-1), firstSocket);
             Thread firstReceiver = new ReceiverTask(this, firstSocket);
             firstReceiver.start();
             sleep(10000);
             ViewChangeMessage message = (ViewChangeMessage) this.node.dequeueIncomingMessage();
+            System.out.println("Received view change message: " + message.toString());
             this.newView = message.getView();
             Peer first = newView.stream().filter(peer -> peer.getId() == message.getSourceId()).findFirst().orElseThrow(() -> new Exception("Error: failed to find the first peer in the view."));
             this.sockets.put(first, firstSocket);

@@ -7,20 +7,27 @@ import Client.VirtualSynchronyLibrary;
 import Messages.Message;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class ReceiverTask extends Thread {
     private final VirtualSynchronyLibrary library;      // The library that this receiver task is associated with.
     private final Socket clientSocket;                  // The socket that this receiver task is listening on.
 
+    private final ObjectOutputStream out;
+
+    private final ObjectInputStream in;
+
     /*
         * Constructor for the ReceiverTask class.
         * @param library The library that this receiver task is associated with.
         * @param clientSocket The socket that this receiver task is listening on.
      */
-    public ReceiverTask(VirtualSynchronyLibrary library, Socket clientSocket) {
+    public ReceiverTask(VirtualSynchronyLibrary library, Socket clientSocket) throws IOException{
         this.library = library;
         this.clientSocket = clientSocket;
+        out = new ObjectOutputStream(clientSocket.getOutputStream());
+        in = new ObjectInputStream(clientSocket.getInputStream());
     }
 
     /*
@@ -31,9 +38,9 @@ public class ReceiverTask extends Thread {
     public void run() {
         try {
             while (true) {
-                ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
                 Message message = (Message) in.readObject();
                 if (message != null) {
+                    System.out.println("Received message: " + message.toString());
                     this.library.getNode().queueIncomingMessage(message);
                 } else {
                     System.err.println("Failed to deserialize received message.");
@@ -44,5 +51,9 @@ public class ReceiverTask extends Thread {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void sendUnicast(Message message) throws IOException {
+        out.writeObject(message);
     }
 }

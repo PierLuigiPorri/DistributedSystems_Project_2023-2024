@@ -28,6 +28,7 @@ public class DeliverTask extends RunningTask {
             while (true) {
                 Message processingMessage = this.library.getNode().dequeueIncomingMessage();
                 if (processingMessage != null) {
+                    System.out.println("Delivered message: " + processingMessage.toString());
                     this.library.processMessage(processingMessage);
                 }
             }

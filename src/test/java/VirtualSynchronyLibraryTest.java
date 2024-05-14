@@ -12,11 +12,13 @@ import static org.junit.Assert.*;
 
 public class VirtualSynchronyLibraryTest {
 
-    private int port = 3000;
+    String PIER = "192.168.1.158";
+    String DAVIDE = "192.168.1.61";
+    private final int port = 3000;
     //add unit test for the methods of the ReliableBroadcastLibrary class
     @Test
     public void testReliableBroadcastLibrary() throws IOException {
-        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary(port+30);
+        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary(PIER,port+30);
         assertNotNull(rbl);
         assertNotNull(rbl.getNode());
     }
@@ -24,9 +26,9 @@ public class VirtualSynchronyLibraryTest {
 
     @Test
     public void instantiatePeers() throws IOException {
-        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary(port+30);
-        VirtualSynchronyLibrary rbl2 = new VirtualSynchronyLibrary(port+31);
-        VirtualSynchronyLibrary rbl3 = new VirtualSynchronyLibrary(port+32);
+        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary(PIER,port+30);
+        VirtualSynchronyLibrary rbl2 = new VirtualSynchronyLibrary(PIER,port+31);
+        VirtualSynchronyLibrary rbl3 = new VirtualSynchronyLibrary(PIER,port+32);
         rbl.createMulticastGroup();
         rbl2.joinView("localhost", port+30);
         rbl3.joinView("localhost", port+31);
@@ -53,8 +55,8 @@ public class VirtualSynchronyLibraryTest {
 
     @Test
     public void testReliableBroadcastLibraryProcessingMessagesIncomingMessage() throws Exception {
-        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary(port+30);
-        VirtualSynchronyLibrary rbl2 = new VirtualSynchronyLibrary(port+31);
+        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary(PIER,port+30);
+        VirtualSynchronyLibrary rbl2 = new VirtualSynchronyLibrary(PIER,port+31);
         rbl2.connect(InetAddress.getLocalHost(), port+30);
         rbl.getNode().setState(State.NORMAL);
         rbl.getNode().incrementAcks(new Tuple(1, 1));
@@ -72,9 +74,9 @@ public class VirtualSynchronyLibraryTest {
     @Test
     public void sendMulticast() throws IOException, InterruptedException {
 
-        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary(port+30);
-        VirtualSynchronyLibrary rbl2 = new VirtualSynchronyLibrary(port+31);
-        VirtualSynchronyLibrary rbl3 = new VirtualSynchronyLibrary(port+32);
+        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary(PIER,port+30);
+        VirtualSynchronyLibrary rbl2 = new VirtualSynchronyLibrary(PIER,port+31);
+        VirtualSynchronyLibrary rbl3 = new VirtualSynchronyLibrary(PIER,port+32);
         rbl2.connect(InetAddress.getLocalHost(), port+30);
         rbl3.connect(InetAddress.getLocalHost(), port+30);
         rbl2.connect(InetAddress.getLocalHost(), port+32);
@@ -89,15 +91,14 @@ public class VirtualSynchronyLibraryTest {
 
     @Test
     public void test1() throws Exception {
-        VirtualSynchronyLibrary rbl = testWithAnotherMachine(0, "192.168.1.158", port+30);
+        VirtualSynchronyLibrary rbl = testWithAnotherMachine(0, PIER, DAVIDE, port+30, port+31);
         sleep(30000);
         assertEquals(2, rbl.getNode().getView().size());
-
     }
 
     @Test
     public void test2() throws Exception {
-        VirtualSynchronyLibrary rbl = testWithAnotherMachine(1, "192.168.1.158", port+30);
+        VirtualSynchronyLibrary rbl = testWithAnotherMachine(1, DAVIDE, PIER, port+31, port+30);
         sleep(20000);
         assertEquals(2, rbl.getNode().getView().size());
 
@@ -106,13 +107,13 @@ public class VirtualSynchronyLibraryTest {
 
 
 
-    public VirtualSynchronyLibrary testWithAnotherMachine(int number, String address, int port) throws Exception {
-        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary(port);
+    public VirtualSynchronyLibrary testWithAnotherMachine(int number, String ownAddress, String otherAddress, int ownPort, int otherPort) throws Exception {
+        VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary(ownAddress,ownPort);
         if(number==0){
             rbl.createMulticastGroup();
         }
         else{
-            rbl.joinView(address, port);
+            rbl.joinView(otherAddress, otherPort);
         }
         return rbl;
     }
