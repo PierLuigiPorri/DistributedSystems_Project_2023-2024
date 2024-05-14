@@ -89,17 +89,17 @@ public class VirtualSynchronyLibraryTest {
 
     @Test
     public void test1() throws Exception {
-        VirtualSynchronyLibrary rbl = testWithAnotherMachine(0, "localhost", port+30);
-        sleep(13000);
-        assertEquals(1, rbl.getNode().getView().size());
+        VirtualSynchronyLibrary rbl = testWithAnotherMachine(0, "192.168.1.158", port+30);
+        sleep(30000);
+        assertEquals(2, rbl.getNode().getView().size());
 
     }
 
     @Test
     public void test2() throws Exception {
-        VirtualSynchronyLibrary rbl = testWithAnotherMachine(1, "151.64.230.254", port+30);
-        sleep(3000);
-        assertEquals(1, rbl.getNode().getView().size());
+        VirtualSynchronyLibrary rbl = testWithAnotherMachine(1, "192.168.1.158", port+30);
+        sleep(20000);
+        assertEquals(2, rbl.getNode().getView().size());
 
     }
 
