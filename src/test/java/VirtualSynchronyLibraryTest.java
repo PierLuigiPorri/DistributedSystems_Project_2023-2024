@@ -7,6 +7,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.InetAddress;
 
+import static java.lang.Thread.sleep;
 import static org.junit.Assert.*;
 
 public class VirtualSynchronyLibraryTest {
@@ -88,18 +89,24 @@ public class VirtualSynchronyLibraryTest {
 
     @Test
     public void test1() throws Exception {
-        testWithAnotherMachine(0, "localhost", port+30);
+        VirtualSynchronyLibrary rbl = testWithAnotherMachine(0, "localhost", port+30);
+        sleep(13000);
+        assertEquals(1, rbl.getNode().getView().size());
+
     }
 
     @Test
     public void test2() throws Exception {
-        testWithAnotherMachine(1, "131.175.126.14", port+30);
+        VirtualSynchronyLibrary rbl = testWithAnotherMachine(1, "151.64.230.254", port+30);
+        sleep(3000);
+        assertEquals(1, rbl.getNode().getView().size());
+
     }
 
 
 
 
-    public void testWithAnotherMachine(int number, String address, int port) throws Exception {
+    public VirtualSynchronyLibrary testWithAnotherMachine(int number, String address, int port) throws Exception {
         VirtualSynchronyLibrary rbl = new VirtualSynchronyLibrary(port);
         if(number==0){
             rbl.createMulticastGroup();
@@ -107,5 +114,6 @@ public class VirtualSynchronyLibraryTest {
         else{
             rbl.joinView(address, port);
         }
+        return rbl;
     }
 }
