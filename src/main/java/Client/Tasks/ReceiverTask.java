@@ -14,9 +14,13 @@ public class ReceiverTask extends Thread {
     private final VirtualSynchronyLibrary library;      // The library that this receiver task is associated with.
     private final Socket clientSocket;                  // The socket that this receiver task is listening on.
 
-    private final ObjectOutputStream out;
+    private boolean active = false;                     // A flag to indicate whether the thread is active or not. If it's not active, the thread is in the joining process and any incoming messages are stored in the setupMessage variable.
 
-    private final ObjectInputStream in;
+    private final ObjectOutputStream out;               // The output stream of the socket.
+
+    private final ObjectInputStream in;                 // The input stream of the socket.
+
+    private Message setupMessage;                       // The message that was received during the joining process.
 
     /*
         * Constructor for the ReceiverTask class.
@@ -41,7 +45,12 @@ public class ReceiverTask extends Thread {
                 Message message = (Message) in.readObject();
                 if (message != null) {
                     System.out.println("Received message: " + message.toString());
-                    this.library.getNode().queueIncomingMessage(message);
+                    if(active){
+                        this.library.getNode().queueIncomingMessage(message);
+                    }
+                    else {
+                        setupMessage = message;
+                    }
                 } else {
                     System.err.println("Failed to deserialize received message.");
                 }
@@ -53,7 +62,27 @@ public class ReceiverTask extends Thread {
         }
     }
 
+    /*
+        * This method sends a message to a specific node in the network.
+        * @param message The message to be sent.
+
+     */
     public void sendUnicast(Message message) throws IOException {
         out.writeObject(message);
+    }
+
+    /*
+        * This method activates the thread for normal use.
+     */
+    public void activate() {
+        active = true;
+    }
+
+    /*
+        * This method returns the message during the joining process.
+        * @return The message that was received.
+     */
+    public Message getSetupMessage() {
+        return setupMessage;
     }
 }

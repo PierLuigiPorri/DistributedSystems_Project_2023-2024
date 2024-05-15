@@ -24,7 +24,7 @@ public class VirtualSynchronyLibrary {
     private final InetAddress address;                          // address of the local machine
     private final ArrayList<Thread> sendingThreads;             // list of threads for sending messages
     private final ArrayList<Thread> processThreads;             // list of threads for processing messages
-    private final HashMap<Integer, Thread> receiverThreads;     // list of threads for receiving messages
+    private final HashMap<Integer, ReceiverTask> receiverThreads;// list of threads for receiving messages
     private final Thread deliverThread;                         //thread for delivering incoming messages
     private final ConnectionManager connectionManager;          // class to handle incoming connections
 
@@ -183,17 +183,6 @@ public class VirtualSynchronyLibrary {
     }
 
     /*
-    * Method to send an unicast message to a specific peer.
-    * @param message The message to send.
-    * @param peerSocket The socket of the peer to send the message to.
-    * @throws IOException
-     */
-    public void sendUnicast(Message message, Socket peerSocket) throws IOException {
-        ObjectOutputStream out = new ObjectOutputStream(peerSocket.getOutputStream());
-        out.writeObject(message);
-    }
-
-    /*
     * Method to get the socket of a peer from its id.
     * @param peerId The id of the peer.
     * @return The socket of the peer.
@@ -220,11 +209,10 @@ public class VirtualSynchronyLibrary {
     public void addPeer(Socket clientSocket) throws IOException, ClassNotFoundException, InterruptedException {
         this.node.setState(State.JOINING);
         try {
-            ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-
-            Message message = (Message) in.readObject();
+            ReceiverTask firstReceiver = new ReceiverTask(this, clientSocket);
+            firstReceiver.start();
+            Message message = firstReceiver.getSetupMessage();
             //first message from the new peer
-
             //in.close();
 
             if (message.getType().equals(MessageEnum.JOIN)) {
@@ -236,17 +224,18 @@ public class VirtualSynchronyLibrary {
                     } else break;
                 }
                 this.newView = this.node.getView();
-                this.receiverThreads.put(nextId, new ReceiverTask(this, clientSocket));
-                this.receiverThreads.get(nextId).start();
+                firstReceiver.activate();
+                this.receiverThreads.put(nextId, firstReceiver);
                 Peer peer = new Peer(nextId, clientSocket.getInetAddress(), clientSocket.getPort());
                 this.newView.add(peer);
                 this.sockets.put(peer, clientSocket);
-                sendUnicast(new ViewChangeMessage(this.node.getId(), this.newView, -1), clientSocket);  //send the view to the new peer to let it connect to the others
+                firstReceiver.sendUnicast(new ViewChangeMessage(this.node.getId(), this.newView, -1));  //send the view to the new peer to let it connect to the others
             } else {                                                                                              //if the message is not a join message, it's a view change message, so add new peer and then process it
                 ViewChangeMessage viewChangeMessage = (ViewChangeMessage) message;
                 Peer newPeer = viewChangeMessage.getView().stream().filter(peer -> peer.getId() == viewChangeMessage.getSourceId()).findFirst().orElseThrow(() -> new IOException("Error: failed to find peer in the view."));
                 this.receiverThreads.put(newPeer.getId(), new ReceiverTask(this, clientSocket));
                 this.receiverThreads.get(newPeer.getId()).start();
+                this.receiverThreads.get(newPeer.getId()).activate();
                 this.sockets.put(newPeer, clientSocket);
                 processMessage(viewChangeMessage);
             }
@@ -306,21 +295,22 @@ public class VirtualSynchronyLibrary {
         try {
             Socket firstSocket = new Socket(InetAddress.getByName(address), port);
             sleep(5000);
-            sendUnicast(new JoinMessage(-1), firstSocket);
-            Thread firstReceiver = new ReceiverTask(this, firstSocket);
+            ReceiverTask firstReceiver = new ReceiverTask(this, firstSocket);
+            firstReceiver.sendUnicast(new JoinMessage(-1));
             firstReceiver.start();
             sleep(10000);
-            ViewChangeMessage message = (ViewChangeMessage) this.node.dequeueIncomingMessage();
+            ViewChangeMessage message = (ViewChangeMessage) firstReceiver.getSetupMessage();
             System.out.println("Received view change message: " + message.toString());
             this.newView = message.getView();
             Peer first = newView.stream().filter(peer -> peer.getId() == message.getSourceId()).findFirst().orElseThrow(() -> new Exception("Error: failed to find the first peer in the view."));
             this.sockets.put(first, firstSocket);
+            firstReceiver.activate();
             this.receiverThreads.put(message.getSourceId(), firstReceiver);
             int ownId = newView.stream().filter(peer -> {
                 try {
                     return peer.getAddress().equals(InetAddress.getByName(address));
                 } catch (UnknownHostException e) {
-                    e.printStackTrace();
+                    System.out.println("Error: Failed to parse the host. " + e.getMessage());
                 }
                 return false;
             }).findFirst().orElseThrow(() -> new Exception("Error: failed to find peer in the view.")).getId();
@@ -330,6 +320,7 @@ public class VirtualSynchronyLibrary {
                 this.sockets.put(peer, socket);
                 this.receiverThreads.put(peer.getId(), new ReceiverTask(this, socket));
                 this.receiverThreads.get(peer.getId()).start();
+                this.receiverThreads.get(peer.getId()).activate();
             }
             deliverThread.start();
             sleep(1000);
@@ -339,7 +330,7 @@ public class VirtualSynchronyLibrary {
         }
     }
 
-    /*public InetAddress getLocalAddress(){
+    /*public InetAddress getLocalAddress(){         //TODO: remove this, it's (hopefully) not needed
         InetAddress ip = null;
         try(final DatagramSocket socket = new DatagramSocket()){
             socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
