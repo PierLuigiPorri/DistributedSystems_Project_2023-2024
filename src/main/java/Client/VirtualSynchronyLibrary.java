@@ -229,7 +229,7 @@ public class VirtualSynchronyLibrary {
                 this.newView = this.node.getView();
                 firstReceiver.activate();
                 this.receiverThreads.put(nextId, firstReceiver);
-                Peer peer = new Peer(nextId, clientSocket.getInetAddress(), clientSocket.getPort());
+                Peer peer = new Peer(nextId, InetAddress.getByName("0.0.0.0"), clientSocket.getPort());
                 this.newView.add(peer);
                 this.sockets.put(peer, clientSocket);
                 firstReceiver.sendUnicast(new ViewChangeMessage(this.node.getId(), this.newView, -1));  //send the view to the new peer to let it connect to the others
@@ -311,13 +311,15 @@ public class VirtualSynchronyLibrary {
             this.receiverThreads.put(message.getSourceId(), firstReceiver);
             int ownId = newView.stream().filter(peer -> {
                 try {
-                    return peer.getAddress().equals(InetAddress.getByName(address));
+                    return peer.getAddress().equals(InetAddress.getByName("0.0.0.0"));
                 } catch (UnknownHostException e) {
                     System.out.println("Error: Failed to parse the host. " + e.getMessage());
                 }
                 return false;
             }).findFirst().orElseThrow(() -> new Exception("Error: failed to find peer in the view.")).getId();
             this.node.setId(ownId);
+            //set the address of the peer in newView with id = ownId to the local address
+            this.newView.stream().filter(peer -> peer.getId() == ownId).forEach(peer -> peer.setAddress(this.address));
             for (Peer peer : this.newView.stream().filter(p -> p.getId() != this.node.getId() && p.getId() != message.getSourceId()).toList()) {
                 Socket socketPeer = new Socket(peer.getAddress(), peer.getPort());
                 this.sockets.put(peer, socketPeer);

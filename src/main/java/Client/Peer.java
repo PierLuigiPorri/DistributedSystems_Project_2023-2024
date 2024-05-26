@@ -10,7 +10,7 @@ public class Peer implements Serializable {
     private final int id;                                   // Peer id
     private int sequenceNumber = 0;                         // Sequence number of the peer
 
-    private final InetAddress address;                      // Peer address
+    private InetAddress address;                      // Peer address
     private final int port;                                 // Peer port
 
     /*
@@ -62,5 +62,9 @@ public class Peer implements Serializable {
      */
     public void incrementSequenceNumber() {
         this.sequenceNumber++;
+    }
+
+    public void setAddress(InetAddress address) {
+        this.address = address;
     }
 }
