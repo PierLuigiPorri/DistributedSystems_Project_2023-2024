@@ -432,7 +432,7 @@ public class VirtualSynchronyLibrary {
         handleDisconnection();
         this.node.setState(State.JOINING);
         //try to connect to the first peer in the view, if it fails, try the next one
-        for (Peer peer : this.node.getView()) {
+        for (Peer peer : this.node.getView().stream().filter(p -> p.getId()!=this.node.getId()).toList()) {
             try {
                 joinView(peer.getAddress().getHostAddress(), peer.getPort());
                 break;
