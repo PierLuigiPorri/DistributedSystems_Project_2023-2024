@@ -171,9 +171,9 @@ public class VirtualSynchronyLibrary {
     public void sendMulticast(Message message) throws IOException {
         // send the ping to all nodes in the view using TCP
         ArrayList<Peer> view;
-        if (this.node.getState().equals(State.VIEW_CHANGE)) {
+        if (this.node.getState().equals(State.VIEW_CHANGE)) {//view change case
             view = this.newView;
-        } else { //view change case
+        } else {
             view = this.node.getView();
         }
         for (Peer peer : view) {
@@ -214,7 +214,7 @@ public class VirtualSynchronyLibrary {
             ReceiverTask firstReceiver = new ReceiverTask(this, clientSocket);
             firstReceiver.start();
 
-            sleep(100);
+            sleep(1000);
 
             Message message = firstReceiver.getSetupMessage();
             //first message from the new peer

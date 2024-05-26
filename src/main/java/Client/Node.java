@@ -171,7 +171,7 @@ public class Node {
     * @return ArrayList<Peer>: List of peers in the view.
      */
     public ArrayList<Peer> getView() {
-        return view;
+        return this.view;
     }
 
     /*

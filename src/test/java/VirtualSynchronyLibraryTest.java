@@ -99,7 +99,7 @@ public class VirtualSynchronyLibraryTest {
     @Test
     public void test2() throws Exception {
         VirtualSynchronyLibrary rbl = testWithAnotherMachine(1, DAVIDE, PIER, port+31, port+30);
-        sleep(20000);
+        sleep(45000);
         assertEquals(2, rbl.getNode().getView().size());
 
     }
