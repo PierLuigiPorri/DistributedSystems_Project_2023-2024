@@ -211,6 +211,9 @@ public class VirtualSynchronyLibrary {
         try {
             ReceiverTask firstReceiver = new ReceiverTask(this, clientSocket);
             firstReceiver.start();
+
+            sleep(100);
+
             Message message = firstReceiver.getSetupMessage();
             //first message from the new peer
             //in.close();
@@ -316,9 +319,9 @@ public class VirtualSynchronyLibrary {
             }).findFirst().orElseThrow(() -> new Exception("Error: failed to find peer in the view.")).getId();
             this.node.setId(ownId);
             for (Peer peer : this.newView.stream().filter(p -> p.getId() != this.node.getId() && p.getId() != message.getSourceId()).toList()) {
-                Socket socket = new Socket(peer.getAddress(), peer.getPort());
-                this.sockets.put(peer, socket);
-                this.receiverThreads.put(peer.getId(), new ReceiverTask(this, socket));
+                Socket socketPeer = new Socket(peer.getAddress(), peer.getPort());
+                this.sockets.put(peer, socketPeer);
+                this.receiverThreads.put(peer.getId(), new ReceiverTask(this, socketPeer));
                 this.receiverThreads.get(peer.getId()).start();
                 this.receiverThreads.get(peer.getId()).activate();
             }

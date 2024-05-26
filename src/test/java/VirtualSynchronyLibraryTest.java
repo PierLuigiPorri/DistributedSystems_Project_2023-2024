@@ -12,8 +12,8 @@ import static org.junit.Assert.*;
 
 public class VirtualSynchronyLibraryTest {
 
-    String PIER = "192.168.1.158";
-    String DAVIDE = "192.168.1.61";
+    String PIER = "127.0.0.1";//"192.168.1.158";
+    String DAVIDE = "127.0.0.1";//"192.168.1.61";
     private final int port = 3000;
     //add unit test for the methods of the ReliableBroadcastLibrary class
     @Test
@@ -92,7 +92,7 @@ public class VirtualSynchronyLibraryTest {
     @Test
     public void test1() throws Exception {
         VirtualSynchronyLibrary rbl = testWithAnotherMachine(0, PIER, DAVIDE, port+30, port+31);
-        sleep(30000);
+        sleep(45000);
         assertEquals(2, rbl.getNode().getView().size());
     }
 

@@ -44,12 +44,13 @@ public class ReceiverTask extends Thread {
             while (true) {
                 Message message = (Message) in.readObject();
                 if (message != null) {
-                    System.out.println("Received message: " + message.toString());
+                    System.out.println("Received message: " + message);
                     if(active){
                         this.library.getNode().queueIncomingMessage(message);
                     }
                     else {
                         setupMessage = message;
+                        System.out.println("Received setup message: " + message);
                     }
                 } else {
                     System.err.println("Failed to deserialize received message.");
