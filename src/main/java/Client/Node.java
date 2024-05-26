@@ -124,7 +124,7 @@ public class Node {
      */
     public void initializeTimer() {
         this.viewTimers = new HashMap<>();
-        for (Peer node : view) {
+        for (Peer node : view.stream().filter(p -> p.getId()!=this.id).toList()) {
             this.viewTimers.put(node.getId(), 0);
         }
     }
