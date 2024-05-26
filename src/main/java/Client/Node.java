@@ -154,7 +154,7 @@ public class Node {
      */
     public int checkIfSomeoneIsDead() {
         int deadNode = -1;
-        for (Peer node : view) {
+        for (Peer node : view.stream().filter(p -> p.getId()!=this.id).toList()) {
             if (viewTimers.get(node.getId()) > 2) {
                 if (deadNode == -1) {
                     deadNode = node.getId();
