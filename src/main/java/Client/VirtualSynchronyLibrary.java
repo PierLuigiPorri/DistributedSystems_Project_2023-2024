@@ -88,8 +88,10 @@ public class VirtualSynchronyLibrary {
                 }
             }
             case PING -> {
-                PingMessage pingMessage = (PingMessage) message;
-                this.getNode().resetTimer(pingMessage.getSourceId());
+                if(this.node.getState().equals(State.NORMAL)) {
+                    PingMessage pingMessage = (PingMessage) message;
+                    this.getNode().resetTimer(pingMessage.getSourceId());
+                }
             }
             case ACK -> {
                 AckMessage ackMessage = (AckMessage) message;
